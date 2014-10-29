@@ -4,10 +4,10 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.os.Looper;
 import android.os.RemoteException;
 import android.util.Log;
-import android.widget.Toast;
+
+import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -16,6 +16,8 @@ import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -57,10 +59,17 @@ public class KeylessEntryApplication extends Application implements RangeNotifie
         for (Beacon b : beacons) {
             if (b instanceof MyAltBeacon) {
                 //TODO: verbinde mit raspberrypi und öffne türe
-                MyAltBeacon beacon = (MyAltBeacon)b;
-                Toast.makeText(this, "Gesuchtes beacon gefunden", Toast.LENGTH_SHORT).show();
-                Looper.loop(); // ohne das funktioniert toast nicht (keine ahnung was es bringt)
-                Log.d(TAG, "Found beacon: " + b.getId1().toHexString());
+                MyAltBeacon beacon = (MyAltBeacon) b;
+                // gebe one-time-code aus wenn passendes beacon gefunden
+                long moving = System.currentTimeMillis();
+                moving = moving - (moving % (30 * 1000));
+                try {
+                    Log.d(TAG, "Found beacon: " + HOTPAlgorithm.generateOTP(b.getId1().toHexString().getBytes(), moving, 4, false, 0));
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                } catch (InvalidKeyException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
