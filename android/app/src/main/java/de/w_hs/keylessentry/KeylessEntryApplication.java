@@ -1,6 +1,11 @@
 package de.w_hs.keylessentry;
 
 import android.app.Application;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -20,6 +25,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
 
 public class KeylessEntryApplication extends Application implements RangeNotifier {
     private static final String TAG = ".KeylessEntryApplication";
@@ -51,7 +58,7 @@ public class KeylessEntryApplication extends Application implements RangeNotifie
         for (int i = 0; i < identifiers.size(); i++) {
             regions.add(new Region(UNIQUE_ID + i, identifiers.get(i), null, null));
         }
-        beaconManager.bind(new InternalBeaconConsumer());
+        beaconManager.bind(mInternalConsumer);
     }
 
     @Override
@@ -60,16 +67,59 @@ public class KeylessEntryApplication extends Application implements RangeNotifie
             if (b instanceof MyAltBeacon) {
                 //TODO: verbinde mit raspberrypi und öffne türe
                 MyAltBeacon beacon = (MyAltBeacon) b;
+                try {
+                    beaconManager.stopRangingBeaconsInRegion(region);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+                beacon.getBluetoothDevice().connectGatt(this, false, new InternalGattCallback());
+                Log.d(TAG, "Found beacon");
                 // gebe one-time-code aus wenn passendes beacon gefunden
+//                long moving = System.currentTimeMillis();
+//                moving = moving - (moving % (30 * 1000));
+//                try {
+//                    Log.d(TAG, "Found beacon: " + HOTPAlgorithm.generateOTP(b.getId1().toHexString().getBytes(), moving, 4, false, 0));
+//                } catch (NoSuchAlgorithmException e) {
+//                    e.printStackTrace();
+//                } catch (InvalidKeyException e) {
+//                    e.printStackTrace();
+//                }
+            }
+        }
+    }
+
+    private InternalBeaconConsumer mInternalConsumer = new InternalBeaconConsumer();
+
+    private class InternalGattCallback extends BluetoothGattCallback {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            if (newState != BluetoothProfile.STATE_CONNECTED) {
+                gatt.disconnect();
+            } else {
+                gatt.discoverServices();
+            }
+        }
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                List<BluetoothGattService> services = gatt.getServices();
+                if (services.size() == 0)
+                    return;
+                BluetoothGattService service = gatt.getService(UUID.fromString("542888d1-6a92-4d9b-9314-69882775001a"));
+                BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("a7a09b5d-8374-445b-89cc-42b73dd164e8"));
                 long moving = System.currentTimeMillis();
                 moving = moving - (moving % (30 * 1000));
                 try {
-                    Log.d(TAG, "Found beacon: " + HOTPAlgorithm.generateOTP(b.getId1().toHexString().getBytes(), moving, 4, false, 0));
+                    characteristic.setValue(HOTPAlgorithm.generateOTP("E20A39F4-73F5-4BC4-A12F-17D1AD07A961".getBytes(), moving, 4, false, 0));
+                    Log.d(TAG, "Wrote characteristic");
                 } catch (NoSuchAlgorithmException e) {
                     e.printStackTrace();
                 } catch (InvalidKeyException e) {
                     e.printStackTrace();
                 }
+            } else {
+                Log.d(TAG, "error on discovering services");
             }
         }
     }
