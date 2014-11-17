@@ -14,6 +14,8 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
 
@@ -26,7 +28,6 @@ import org.altbeacon.beacon.Region;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -89,7 +90,43 @@ public class MainActivity extends Activity implements RangeNotifier {
         return super.onOptionsItemSelected(item);
     }
 
+    //**********************************************************************************************
+    public void onClickStart(View button){
+        findViewById(R.id.start).setVisibility(View.GONE);
+        findViewById(R.id.stop).setVisibility(View.VISIBLE);
 
+        try {
+            BeaconManager.logDebug(TAG, "Background region monitoring activated for region " + region);
+            beaconManager.startRangingBeaconsInRegion(region);
+            if (beaconManager.isBackgroundModeUninitialized()) {
+                beaconManager.setBackgroundMode(true);
+                ((TextView)findViewById(R.id.text)).setText("Status: start");
+            }
+        } catch (RemoteException e) {
+            Log.e(TAG, "Can't set up bootstrap regions due to " + e);
+            ((TextView)findViewById(R.id.text)).setText("Status: error");
+        }
+    }
+
+    public void onClickStop(View button){
+        findViewById(R.id.stop).setVisibility(View.GONE);
+        findViewById(R.id.start).setVisibility(View.VISIBLE);
+
+        try {
+            BeaconManager.logDebug(TAG, "Background region monitoring activated for region " + region);
+            beaconManager.stopRangingBeaconsInRegion(region);
+            if (beaconManager.isBackgroundModeUninitialized()) {
+                beaconManager.setBackgroundMode(true);
+                ((TextView)findViewById(R.id.text)).setText("Status: stop");
+            }
+        } catch (RemoteException e) {
+            Log.e(TAG, "Can't set up bootstrap regions due to " + e);
+            ((TextView)findViewById(R.id.text)).setText("Status: error");
+        }
+    }
+
+
+    //**********************************************************************************************
     @Override
     public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
         for (Beacon b : beacons) {
@@ -103,6 +140,7 @@ public class MainActivity extends Activity implements RangeNotifier {
                 }
                 beacon.getBluetoothDevice().connectGatt(this, false, mInternalGatt);
                 Log.d(TAG, "Found beacon");
+                ((TextView)findViewById(R.id.text)).setText("Status: erfolgreich");
                 // gebe one-time-code aus wenn passendes beacon gefunden
 //                long moving = System.currentTimeMillis();
 //                moving = moving - (moving % (30 * 1000));
@@ -125,9 +163,11 @@ public class MainActivity extends Activity implements RangeNotifier {
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState != BluetoothProfile.STATE_CONNECTED) {
                 gatt.disconnect();
+                ((TextView)findViewById(R.id.text)).setText("Status: getrennt");
             } else {
                 gatt.connect();
                 gatt.discoverServices();
+                ((TextView)findViewById(R.id.text)).setText("Status: verbunden");
             }
         }
 
@@ -165,15 +205,7 @@ public class MainActivity extends Activity implements RangeNotifier {
         public void onBeaconServiceConnect() {
             BeaconManager.logDebug(TAG, "Activating background region monitoring");
             beaconManager.setRangeNotifier(MainActivity.this);
-            try {
-                BeaconManager.logDebug(TAG, "Background region monitoring activated for region " + region);
-                beaconManager.startRangingBeaconsInRegion(region);
-                if (beaconManager.isBackgroundModeUninitialized()) {
-                    beaconManager.setBackgroundMode(true);
-                }
-            } catch (RemoteException e) {
-                Log.e(TAG, "Can't set up bootstrap regions due to " + e);
-            }
+
         }
 
         /**
