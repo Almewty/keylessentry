@@ -1,10 +1,12 @@
 package de.w_hs.keylessentry;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
@@ -39,6 +41,7 @@ public class MainActivity extends Activity implements RangeNotifier {
     private static final String UNIQUE_ID = "com.w_hs.keylessentry.KeylessEntryApplicationID";
     private static final long BETWEEN_SCAN = 7 * 1000;
     private static final long SCAN_DURATION = 3 * 1000;
+    private static final int REQUEST_ENABLE_BT = 0;
 
 
     private BeaconManager beaconManager = BeaconManager.getInstanceForApplication(this);
@@ -95,7 +98,19 @@ public class MainActivity extends Activity implements RangeNotifier {
         findViewById(R.id.start).setVisibility(View.GONE);
         findViewById(R.id.stop).setVisibility(View.VISIBLE);
 
+        BluetoothManager btManager = (BluetoothManager)getSystemService(Context.BLUETOOTH_SERVICE);
+
+        BluetoothAdapter btAdapter = btManager.getAdapter();
+        
         try {
+            
+
+            if (btAdapter != null && !btAdapter.isEnabled()) {
+                Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableIntent,REQUEST_ENABLE_BT);
+                
+            }
+
             BeaconManager.logDebug(TAG, "Background region monitoring activated for region " + region);
             beaconManager.startRangingBeaconsInRegion(region);
             if (beaconManager.isBackgroundModeUninitialized()) {
