@@ -4,5 +4,6 @@
     <string name="app_name">KeylessEntry</string>
     <string name="action_about">About</string>
     <string name="title_activity_about">AboutActivity</string>
-
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
 </resources>
