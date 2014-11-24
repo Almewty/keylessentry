@@ -8,6 +8,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "bleno": "0.1.8"
+    "bleno": "0.1.8",
+    "sqlite3": "^3.0.4"
   }
 }
