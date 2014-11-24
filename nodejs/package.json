@@ -9,6 +9,6 @@
   "license": "MIT",
   "dependencies": {
     "bleno": "0.1.8"
-    , "sqlite3": "~2.2.3"
+    , "sqlite3": "^3.0.4"
  }
 }
