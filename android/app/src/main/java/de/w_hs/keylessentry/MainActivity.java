@@ -31,7 +31,6 @@ public class MainActivity extends Activity {
     private static final String TAG = ".KeylessEntryApplication";
     private static final int REQUEST_ENABLE_BT = 0;
     private static final int TRUNCATION_OFFSET = 0;
-    private static final int CODE_DIGITS = 4;
 
     private BluetoothAdapter mBluetoothAdapter;
 
@@ -89,7 +88,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    public void onClickStart(View button){
+    public void onClickStart(View button) {
         toggleButtons();
 
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
@@ -102,22 +101,21 @@ public class MainActivity extends Activity {
         mBluetoothAdapter.startLeScan(mScanCallback);
     }
 
-    public void onClickStop(View button){
+    public void onClickStop(View button) {
         toggleButtons();
 
         mBluetoothAdapter.stopLeScan(mScanCallback);
     }
 
-    private static String generateOTP(byte[] sharedSecret) throws InvalidKeyException {
+    private static int generateOTP(byte[] sharedSecret) {
         long time = System.currentTimeMillis();
         time -= (time % (30 * 1000));
-        String result = null;
         try {
-            result = HOTPAlgorithm.generateOTP(sharedSecret, time, CODE_DIGITS, false, TRUNCATION_OFFSET);
-        } catch (NoSuchAlgorithmException e) {
+            return HOTPAlgorithm.generateBinaryOTP(sharedSecret, time, TRUNCATION_OFFSET);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return result;
+        return -1;
     }
 
     private BluetoothAdapter.LeScanCallback mScanCallback = new BluetoothAdapter.LeScanCallback() {
@@ -150,20 +148,15 @@ public class MainActivity extends Activity {
                 BluetoothGattService service = gatt.getService(UUID.fromString("542888d1-6a92-4d9b-9314-69882775001a"));
                 BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("a7a09b5d-8374-445b-89cc-42b73dd164e8"));
                 //TODO: one time code senden
-                try {
-                    characteristic.setValue(generateOTP(characteristic.getUuid().toString().getBytes()));
-                    gatt.writeCharacteristic(characteristic);
-                } catch (InvalidKeyException e) {
-                    toggleButtons();
-                    e.printStackTrace();
-                }
+                characteristic.setValue(generateOTP(characteristic.getUuid().toString().getBytes()), BluetoothGattCharacteristic.FORMAT_SINT32, 0);
+                gatt.writeCharacteristic(characteristic);
             } else {
                 Log.w(TAG, "service error: " + status);
             }
         }
 
         @Override
-    public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             gatt.disconnect();
             gatt.close();
             toggleButtons();
