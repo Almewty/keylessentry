@@ -25,6 +25,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 import de.w_hs.keylessentry.activities.AboutActivity;
+import de.w_hs.keylessentry.data.Door;
 
 
 public class MainActivity extends Activity {
@@ -122,6 +123,7 @@ public class MainActivity extends Activity {
         @Override
         public void onLeScan(final BluetoothDevice bluetoothDevice, int i, byte[] bytes) {
             //TODO: überprüfen ob es das richtige bluetooth gerät ist.
+            Door d = Door.getDoorFromBLEAdv(bytes);
             mBluetoothAdapter.stopLeScan(mScanCallback);
             runOnUiThread(new Runnable() {
                 @Override

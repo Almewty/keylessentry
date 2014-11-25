@@ -2,13 +2,19 @@ package de.w_hs.keylessentry.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
 
+import org.apache.http.util.ByteArrayBuffer;
+
+import java.nio.ByteBuffer;
 import java.util.UUID;
 
 public class Door implements Parcelable {
     private static final int TRUNCATION_OFFSET = 0;
+    private static final byte[] COMPANY_IDENTIFIER = {(byte) 0xFF, (byte) 0xFF};
+    private static final byte[] DOOR_IDENTIFIER = {(byte) 0xD0, (byte) 0x02};
 
     private UUID remoteIdentifier;
     private UUID ownIdentifier;
@@ -48,17 +54,23 @@ public class Door implements Parcelable {
     @Override
     public boolean equals(Object object) {
         if (object instanceof Door) {
-            Door d = (Door)object;
+            Door d = (Door) object;
             return remoteIdentifier.equals(d.getRemoteIdentifier()) && ownIdentifier.equals(d.getOwnIdentifier());
         }
         return false;
+    }
+
+    public static Door getDoorFromBLEAdv(byte[] data) {
+        ByteBuffer bb = ByteBuffer.allocate(data.length);
+        
+        return null;
     }
 
     //region Parcel
 
     private Door(Parcel parcel) {
         this.name = parcel.readString();
-        this.remoteIdentifier = (UUID)parcel.readSerializable();
+        this.remoteIdentifier = (UUID) parcel.readSerializable();
         parcel.readByteArray(this.sharedSecret);
     }
 
