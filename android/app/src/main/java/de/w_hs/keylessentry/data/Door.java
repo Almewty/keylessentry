@@ -10,13 +10,15 @@ import java.util.UUID;
 public class Door implements Parcelable {
     private static final int TRUNCATION_OFFSET = 0;
 
-    private UUID uniqueIdentifier;
+    private UUID remoteIdentifier;
+    private UUID ownIdentifier;
     private byte[] sharedSecret;
     private String name;
 
-    public Door(String name, UUID uniqueIdentifier, byte[] sharedSecret) {
+    public Door(String name, UUID remoteIdentifier, UUID ownIdentifier, byte[] sharedSecret) {
         this.name = name;
-        this.uniqueIdentifier = uniqueIdentifier;
+        this.remoteIdentifier = remoteIdentifier;
+        this.ownIdentifier = ownIdentifier;
         this.sharedSecret = sharedSecret;
     }
 
@@ -31,8 +33,8 @@ public class Door implements Parcelable {
         return -1;
     }
 
-    public UUID getUniqueIdentifier() {
-        return uniqueIdentifier;
+    public UUID getRemoteIdentifier() {
+        return remoteIdentifier;
     }
 
     public byte[] getSharedSecret() {
@@ -45,28 +47,18 @@ public class Door implements Parcelable {
 
     @Override
     public boolean equals(Object object) {
-        UUID objID = null;
         if (object instanceof Door) {
-            objID = ((Door)object).getUniqueIdentifier();
-        } else if (object instanceof String) {
-            try {
-                objID = UUID.fromString((String) object);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else if (object instanceof UUID) {
-            objID = (UUID)object;
-        } else {
-            return false;
+            Door d = (Door)object;
+            return remoteIdentifier.equals(d.getRemoteIdentifier()) && ownIdentifier.equals(d.getOwnIdentifier());
         }
-        return uniqueIdentifier.equals(objID);
+        return false;
     }
 
     //region Parcel
 
     private Door(Parcel parcel) {
         this.name = parcel.readString();
-        this.uniqueIdentifier = (UUID)parcel.readSerializable();
+        this.remoteIdentifier = (UUID)parcel.readSerializable();
         parcel.readByteArray(this.sharedSecret);
     }
 
@@ -90,8 +82,12 @@ public class Door implements Parcelable {
     @Override
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(name);
-        parcel.writeSerializable(uniqueIdentifier);
+        parcel.writeSerializable(remoteIdentifier);
         parcel.writeByteArray(sharedSecret);
+    }
+
+    public UUID getOwnIdentifier() {
+        return ownIdentifier;
     }
     //endregion
 }
