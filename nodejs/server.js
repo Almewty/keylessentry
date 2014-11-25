@@ -5,17 +5,24 @@
     var sqlite3 = require('sqlite3').verbose();
     var databasepath = "keyless.db";
     var db = new sqlite3.Database(databasepath);
-    var init = true;       //Flag damit die Datenbank nur einmal initialisiert wird
+    var init = false;       //Flag damit die Datenbank nur einmal initialisiert wird
 
     //Datenbankzugriff muss komplett im db.serialize block stehen, damit der Datenbankzugriff sauber abläuft
     db.serialize(function() {              
     
-        
-        if(!init)
+        if(!init)   //Wenn die Datenbank noch nicht initialisiert ist, initialisieren
         {
-            console.log("yeap db init");
-            dba.initDB(db);     
-            init = true;
+            dba.initDB(db, function(resultcode){
+                if(resultcode == "init_OK")
+                {
+                    init = true;
+                    console.log("db init: success!");
+                }
+               else
+                {
+                    console.log("DB init: an error occurs: " + resultcode);   
+                }
+            });     
         }
         
         dba.insertUUID(db, "debug",moment(), function(status){
@@ -25,6 +32,15 @@
                 console.log("insertUUID: error!");
         });
 
-        dba.getOTA(db, "debug");
+        dba.getSecret(db, "debug", function(sharedsecret){
+         if(sharedsecret) //Wenn kein Fehler aufgetreten ist, ist sharedsecret!=false
+         {
+             for(element in sharedsecret)
+             {
+                 console.log(element);
+             }
+             //console.log(sharedsecret);   
+         }
+        });
 
     });
