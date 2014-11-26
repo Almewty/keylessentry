@@ -12,7 +12,6 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,18 +19,16 @@ import android.view.View;
 
 import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 import de.w_hs.keylessentry.activities.AboutActivity;
-import de.w_hs.keylessentry.data.Door;
+
+import static de.w_hs.keylessentry.Helper.*;
 
 
 public class MainActivity extends Activity {
     private static final String TAG = ".KeylessEntryApplication";
     private static final int REQUEST_ENABLE_BT = 0;
-    private static final int TRUNCATION_OFFSET = 0;
 
     private BluetoothAdapter mBluetoothAdapter;
 
@@ -108,22 +105,22 @@ public class MainActivity extends Activity {
         mBluetoothAdapter.stopLeScan(mScanCallback);
     }
 
-    private static int generateOTP(byte[] sharedSecret) {
+    private static byte[] generateOTP(byte[] sharedSecret) {
         long time = System.currentTimeMillis();
         time -= (time % (30 * 1000));
         try {
-            return HOTPAlgorithm.generateBinaryOTP(sharedSecret, time, TRUNCATION_OFFSET);
+            return HOTPAlgorithm.generateHash(sharedSecret, time);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return -1;
+        return null;
     }
 
     private BluetoothAdapter.LeScanCallback mScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(final BluetoothDevice bluetoothDevice, int i, byte[] bytes) {
             //TODO: überprüfen ob es das richtige bluetooth gerät ist.
-            Door d = Door.getDoorFromBLEAdv(bytes);
+            UUID d = getUUIDFromBLEAdv(bytes);
             mBluetoothAdapter.stopLeScan(mScanCallback);
             runOnUiThread(new Runnable() {
                 @Override
@@ -147,10 +144,10 @@ public class MainActivity extends Activity {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                BluetoothGattService service = gatt.getService(UUID.fromString("542888d1-6a92-4d9b-9314-69882775001a"));
-                BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("a7a09b5d-8374-445b-89cc-42b73dd164e8"));
+                BluetoothGattService service = gatt.getService(Constants.DOOR_SERVICE);
+                BluetoothGattCharacteristic characteristic = service.getCharacteristic(Constants.DOOR_CHARACTERISTIC);
                 //TODO: one time code senden
-                characteristic.setValue(generateOTP(characteristic.getUuid().toString().getBytes()), BluetoothGattCharacteristic.FORMAT_SINT32, 0);
+                characteristic.setValue(generateOTP(characteristic.getUuid().toString().getBytes()));
                 gatt.writeCharacteristic(characteristic);
             } else {
                 Log.w(TAG, "service error: " + status);

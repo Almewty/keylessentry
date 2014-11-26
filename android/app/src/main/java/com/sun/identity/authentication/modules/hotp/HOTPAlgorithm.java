@@ -140,13 +140,6 @@ public class HOTPAlgorithm {
      * @param secret       the shared secret
      * @param movingFactor the counter, time, or other value that
      *                     changes on a per use basis.
-     * @param truncationOffset the offset into the MAC result to
-     *                     begin truncation.  If this value is out of
-     *                     the range of 0 ... 15, then dynamic
-     *                     truncation  will be used.
-     *                     Dynamic truncation is when the last 4
-     *                     bits of the last byte of the MAC are
-     *                     used to determine the start offset.
      * @throws NoSuchAlgorithmException if no provider makes
      *                     either HmacSHA1 or HMAC-SHA-1
      *                     digest algorithms available.
@@ -156,9 +149,8 @@ public class HOTPAlgorithm {
      *
      * @return A binary representation of the OTP
      */
-    static public int generateBinaryOTP(byte[] secret,
-                                     long movingFactor,
-                                     int truncationOffset)
+    static public byte[] generateHash(byte[] secret,
+                                     long movingFactor)
             throws NoSuchAlgorithmException, InvalidKeyException {
         // put movingFactor value into text byte array
         byte[] text = new byte[8];
@@ -169,6 +161,30 @@ public class HOTPAlgorithm {
 
         // compute hmac hash
         byte[] hash = hmac_sha1(secret, text);
+
+        return hash;
+    }
+
+    /**
+     * This method makes the generated OTP human readable.
+     * @param hash         the generated Hash
+     * @param truncationOffset the offset into the MAC result to
+     *                     begin truncation.  If this value is out of
+     *                     the range of 0 ... 15, then dynamic
+     *                     truncation  will be used.
+     *                     Dynamic truncation is when the last 4
+     *                     bits of the last byte of the MAC are
+     *                     used to determine the start offset.
+     * @param codeDigits   the number of digits in the OTP, not
+     *                     including the checksum, if any.
+     * @param addChecksum  a flag that indicates if a checksum digit
+     *                     should be appended to the OTP.
+     * @return             The human readable OTP
+     */
+    static public String makeReadable(byte[] hash,
+                                      int truncationOffset,
+                                      int codeDigits,
+                                      boolean addChecksum) {
 
         // put selected bytes into result int
         int offset = hash[hash.length - 1] & 0xf;
@@ -182,21 +198,6 @@ public class HOTPAlgorithm {
                         ((hash[offset + 2] & 0xff) << 8) |
                         (hash[offset + 3] & 0xff);
 
-        return binary;
-    }
-
-    /**
-     * This method makes the generated OTP human readable.
-     * @param binary        the generated OTP
-     * @param codeDigits   the number of digits in the OTP, not
-     *                     including the checksum, if any.
-     * @param addChecksum  a flag that indicates if a checksum digit
-     *                     should be appended to the OTP.
-     * @return             The human readable OTP
-     */
-    static public String makeReadable(int binary,
-                                      int codeDigits,
-                                      boolean addChecksum) {
         String result = null;
         int digits = addChecksum ? (codeDigits + 1) : codeDigits;
         int otp = binary % DIGITS_POWER[codeDigits];
@@ -243,7 +244,7 @@ public class HOTPAlgorithm {
                                              int codeDigits,
                                              boolean addChecksum)
             throws InvalidKeyException, NoSuchAlgorithmException {
-        return makeReadable(generateBinaryOTP(secret, movingFactor, truncationOffset), codeDigits, addChecksum);
+        return makeReadable(generateHash(secret, movingFactor), truncationOffset, codeDigits, addChecksum);
     }
 
     /*

@@ -2,19 +2,14 @@ package de.w_hs.keylessentry.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
 import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
 
-import org.apache.http.util.ByteArrayBuffer;
-
-import java.nio.ByteBuffer;
 import java.util.UUID;
 
+import static de.w_hs.keylessentry.Helper.*;
+
 public class Door implements Parcelable {
-    private static final int TRUNCATION_OFFSET = 0;
-    private static final byte[] COMPANY_IDENTIFIER = {(byte) 0xFF, (byte) 0xFF};
-    private static final byte[] DOOR_IDENTIFIER = {(byte) 0xD0, (byte) 0x02};
 
     private UUID remoteIdentifier;
     private UUID ownIdentifier;
@@ -28,15 +23,15 @@ public class Door implements Parcelable {
         this.sharedSecret = sharedSecret;
     }
 
-    public int generateOTP() {
+    public byte[] generateOTPHash() {
         long time = System.currentTimeMillis();
         time -= (time % (30 * 1000));
         try {
-            return HOTPAlgorithm.generateBinaryOTP(sharedSecret, time, TRUNCATION_OFFSET);
+            return HOTPAlgorithm.generateHash(sharedSecret, time);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return -1;
+        return null;
     }
 
     public UUID getRemoteIdentifier() {
@@ -56,14 +51,13 @@ public class Door implements Parcelable {
         if (object instanceof Door) {
             Door d = (Door) object;
             return remoteIdentifier.equals(d.getRemoteIdentifier()) && ownIdentifier.equals(d.getOwnIdentifier());
+        } else if (object instanceof UUID) {
+            UUID uuid = (UUID)object;
+            return remoteIdentifier.equals(uuid);
+        } else if (object instanceof byte[]) {
+            return equals(getUUIDFromBLEAdv((byte[]) object));
         }
         return false;
-    }
-
-    public static Door getDoorFromBLEAdv(byte[] data) {
-        ByteBuffer bb = ByteBuffer.allocate(data.length);
-        
-        return null;
     }
 
     //region Parcel
