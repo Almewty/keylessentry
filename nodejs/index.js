@@ -5,6 +5,8 @@ var bleno = require('bleno'),
     Characteristic = bleno.Characteristic,
     Descriptor = bleno.Descriptor;
 
+var server = require('./db_server');
+
 var uuid = 'E20A39F473F54BC4A12F17D1AD07A961';
 var major = 0x0001;
 var minor = 0x0001;
@@ -68,9 +70,15 @@ OTPAuthenticationCharacteristic.prototype.onWriteRequest = function (data, offse
         callback(this.RESULT_ATTR_NOT_LONG);
     }
 
-    callback(Characteristic.RESULT_SUCCESS, data);
-
+  
     console.log(data);
+    
+    server.checkSmartphone(data,function(uuid,otp){
+            
+        callback(Characteristic.RESULT_SUCCESS, data);          //Rückgabe der Daten an das BLE-Gerät
+  
+    });
+    
 };
 
 function OTPService() {
@@ -83,6 +91,11 @@ function OTPService() {
 }
 
 util.inherits(OTPService, PrimaryService);
+
+bleno.updateRssi(function(error, rssi){
+    
+});
+    
 
 bleno.on('stateChange', function (state) {
     console.log('on -> stateChange: ' + state);
@@ -105,3 +118,31 @@ bleno.on('advertisingStart', function (error) {
         ]);
     }
 });
+
+/*
+function checkSmartphone(receivedString){
+    
+        receivedString = "debug;2014-11-26 12:40:49";
+
+            var arr = receivedString.split(";");
+            if(arr.length==2 && typeof(arr[0]) == 'string' && typeof(arr[1]) == 'string')
+            {
+                var uuid = arr[0];
+                var ota = arr[1];
+                console.log(uuid);
+                console.log(ota);
+                    
+                server.getSecretFromDB(uuid,function(DBstoredOTA){
+                    console.log("uuid: " + uuid);
+                    for(element in DBstoredOTA)
+                     {
+                         console.log(element);
+                         callback(uuid,oid);
+                     }
+                });
+            }
+        
+        console.log(uuid);
+        console.log(ota);
+}
+*/
