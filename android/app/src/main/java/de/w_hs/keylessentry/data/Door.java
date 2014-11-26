@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 import static de.w_hs.keylessentry.Helper.*;
@@ -50,14 +51,14 @@ public class Door implements Parcelable {
     public boolean equals(Object object) {
         if (object instanceof Door) {
             Door d = (Door) object;
-            return remoteIdentifier.equals(d.getRemoteIdentifier()) && ownIdentifier.equals(d.getOwnIdentifier());
-        } else if (object instanceof UUID) {
-            UUID uuid = (UUID)object;
-            return remoteIdentifier.equals(uuid);
-        } else if (object instanceof byte[]) {
-            return equals(getUUIDFromBLEAdv((byte[]) object));
+            return remoteIdentifier.equals(d.getRemoteIdentifier()) && ownIdentifier.equals(d.getOwnIdentifier()) && Arrays.equals(sharedSecret, d.getSharedSecret());
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int)remoteIdentifier.getMostSignificantBits();
     }
 
     //region Parcel

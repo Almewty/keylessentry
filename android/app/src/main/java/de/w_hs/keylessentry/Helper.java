@@ -13,11 +13,13 @@ public class Helper {
 
     public static UUID getUUIDFromBLEAdv(byte[] data) throws BufferUnderflowException {
         ByteBuffer bb = ByteBuffer.wrap(data);
-        int adLength;
+        byte adLength;
         while ((adLength = bb.get()) > 0) {
-            int adType = bb.get();
-            if (adType != 0xFF)
+            byte adType = bb.get();
+            if (adType != (byte)0xFF) {
+                bb.position(bb.position() + adLength - 1);
                 continue;
+            }
 
             ByteBuffer buffer = ByteBuffer.wrap(data, bb.position(), adLength - 1);
             buffer.order(ByteOrder.LITTLE_ENDIAN);

@@ -17,13 +17,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
-
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.UUID;
 
 import de.w_hs.keylessentry.activities.AboutActivity;
-import de.w_hs.keylessentry.activities.AddDoorActivity;
+import de.w_hs.keylessentry.data.DataStorage;
+import de.w_hs.keylessentry.data.Door;
 
 import static de.w_hs.keylessentry.Helper.*;
 
@@ -74,9 +74,6 @@ public class MainActivity extends Activity {
         if (id == R.id.action_about) {
             startActivity(new Intent(this, AboutActivity.class));
             return true;
-        } else if (id == R.id.action_new_door) {
-            startActivity(new Intent(this, AddDoorActivity.class));
-            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -113,15 +110,26 @@ public class MainActivity extends Activity {
     private BluetoothAdapter.LeScanCallback mScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(final BluetoothDevice bluetoothDevice, int i, byte[] bytes) {
-            //TODO: überprüfen ob es das richtige bluetooth gerät ist.
-            UUID d = getUUIDFromBLEAdv(bytes);
-            mBluetoothAdapter.stopLeScan(mScanCallback);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    bluetoothDevice.connectGatt(MainActivity.this, true, mGattCallback);
+            UUID uuid = getUUIDFromBLEAdv(bytes);
+            List<Door> doorList = DataStorage.getInstance(getApplicationContext()).getDoors();
+            boolean contains = false;
+            for (Door d : doorList) {
+                if (d.getRemoteIdentifier().equals(uuid)) {
+                    contains = true;
+                    break;
                 }
-            });
+            }
+            if (contains) {
+                mBluetoothAdapter.stopLeScan(mScanCallback);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        bluetoothDevice.connectGatt(MainActivity.this, true, mGattCallback);
+                    }
+                });
+            } else {
+                Log.i(TAG, "wrong beacon");
+            }
         }
     };
 
