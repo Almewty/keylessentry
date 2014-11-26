@@ -1,6 +1,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="w_hs.de.keylessentry.activities.AboutActivity">
+    <item android:id="@+id/action_new_door" android:title="@string/add_new_door"
+        android:orderInCategory="100" android:showAsAction="ifRoom"
+        android:icon="@android:drawable/ic_menu_add" />
     <item android:id="@+id/action_about" android:title="@string/action_about"
         android:orderInCategory="100" android:showAsAction="never" />
 </menu>

@@ -19,9 +19,11 @@ import android.view.View;
 
 import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
 
+import java.nio.ByteBuffer;
 import java.util.UUID;
 
 import de.w_hs.keylessentry.activities.AboutActivity;
+import de.w_hs.keylessentry.activities.AddDoorActivity;
 
 import static de.w_hs.keylessentry.Helper.*;
 
@@ -72,6 +74,9 @@ public class MainActivity extends Activity {
         if (id == R.id.action_about) {
             startActivity(new Intent(this, AboutActivity.class));
             return true;
+        } else if (id == R.id.action_new_door) {
+            startActivity(new Intent(this, AddDoorActivity.class));
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -105,17 +110,6 @@ public class MainActivity extends Activity {
         mBluetoothAdapter.stopLeScan(mScanCallback);
     }
 
-    private static byte[] generateOTP(byte[] sharedSecret) {
-        long time = System.currentTimeMillis();
-        time -= (time % (30 * 1000));
-        try {
-            return HOTPAlgorithm.generateHash(sharedSecret, time);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     private BluetoothAdapter.LeScanCallback mScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(final BluetoothDevice bluetoothDevice, int i, byte[] bytes) {
@@ -147,6 +141,7 @@ public class MainActivity extends Activity {
                 BluetoothGattService service = gatt.getService(Constants.DOOR_SERVICE);
                 BluetoothGattCharacteristic characteristic = service.getCharacteristic(Constants.DOOR_CHARACTERISTIC);
                 //TODO: one time code senden
+
                 characteristic.setValue(generateOTP(characteristic.getUuid().toString().getBytes()));
                 gatt.writeCharacteristic(characteristic);
             } else {

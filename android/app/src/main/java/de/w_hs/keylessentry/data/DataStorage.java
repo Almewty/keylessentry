@@ -22,17 +22,14 @@ public class DataStorage {
     private SQLiteDatabase database;
 
     public static DataStorage getInstance(Context context) {
-        if (dataStorage == null)
+        if (dataStorage == null) {
             dataStorage = new DataStorage(context);
-
+        }
         return dataStorage;
     }
 
     private DataStorage(Context context) {
         storageHelper = new DataStorageHelper(context);
-    }
-
-    public void open() throws SQLException {
         database = storageHelper.getWritableDatabase();
     }
 
