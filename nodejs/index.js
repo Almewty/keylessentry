@@ -1,3 +1,10 @@
+/*
+#########################TO-DO#################################
+
+-Secret generieren und daraus QR-Code erzeugen
+
+*/
+
 /*jshint node:true*/
 var bleno = require('bleno'),
     util = require('util'),
@@ -125,7 +132,7 @@ bleno.on('advertisingStart', function (error) {
 
 function calculateOTA(secret, callback){
     console.log("database secret: " + secret);
-    console.log("I've calculated some shit"+ ota.totp({key: secret}));
+    console.log("I've calculated some shit " + ota.totp({key: secret}));
     callback(ota.totp({key: secret}));
 }
 
