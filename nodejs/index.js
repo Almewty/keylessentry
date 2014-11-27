@@ -123,7 +123,7 @@ bleno.on('advertisingStart', function (error) {
 });
 
 function calculateOTA(secret, callback){
- 
+    console.log("database secret: " + secret);
     console.log("I've calculated some shit");
     callback("66666");
 }
@@ -141,14 +141,17 @@ function checkSmartphone(receivedString, callback){         //receivedString is 
                 console.log(UUIDreceived);
                 console.log(OTAreceived);
                     
-                server.getSecretFromDB(UUIDreceived,function(secretDB){           //secretDB = Secret from DB
-                    calculateOTA(secretDB, function(OTAcalculated){               //OTAcalculated = calculated OTA based on secretDB
+                server.getSecretFromDB(UUIDreceived,function(secretDB){               //secretDB = Secret from DB
+                    if(secretDB)
+                    {
+                        calculateOTA(secretDB, function(OTAcalculated){               //OTAcalculated = calculated OTA based on secretDB
                         //callback(true);
                         if(OTAcalculated == OTAreceived)
                             console.log("Access granted!");
                         else
                             console.log("Get out of my way!");
-                    });
+                        });
+                    }
                 });
             }
         

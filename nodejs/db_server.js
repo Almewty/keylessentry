@@ -27,10 +27,7 @@ module.exports = {
     getSecretFromDB: function(uuid, callback){
         dba.getSecret(db, uuid, function(secret){
             if(secret) //Wenn kein Fehler aufgetreten ist, ist secret!=false
-            {
-                console.log("secret for UUID '" + uuid + "' : " + secret);
                 callback(secret);
-            }
             else
             {
                 console.log("Whoops! This is an error!\nMaybe the table doesn't exist?");
@@ -57,17 +54,16 @@ module.exports = {
         }
     },
     
-    insertUUID: function(uuid, callback){
+    insertUUID: function(uuid, secret, callback){
             
-        dba.insertUUID(db, uuid, moment(), function(status){
+        
+        dba.insertUUID(db, uuid, secret, function(status){
             if(!status)  //Wenn die Funktion "insertUUID" 'False' zurückgibt, ist kein Error aufgetreten
-            {
-                console.log("UUID: '" + uuid + "' successful inserted");
                 callback(true);
-            }
             else
             {
                 console.log("Can't insert Value '" + uuid + "' :/ Does the UUID already exist?");
+                console.log(status);
                 callback(false);
             }
         });
@@ -76,10 +72,7 @@ module.exports = {
     removeUUID: function(uuid, callback){
         dba.removeUUID(db, uuid, function(status){
             if(status)
-            {
-                console.log("Element: '" + uuid + "' is destroyed");
                 callback(true);
-            }
         });
     }
 };
