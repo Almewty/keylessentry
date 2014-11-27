@@ -26,7 +26,7 @@ module.exports = {
     
     getSecretFromDB: function(uuid, callback){
         dba.getSecret(db, uuid, function(secret){
-            if(secret != "getSecret failed") //Wenn kein Fehler aufgetreten ist, ist secret!=false
+            if(secret != "getSecret failed") //Wenn kein Fehler aufgetreten ist, ist secret!="getSecret failed"
                 callback(secret);
             else
             {
@@ -50,8 +50,8 @@ module.exports = {
     
     insertUUID: function(uuid, secret, callback){
         dba.insertUUID(db, uuid, secret, function(status){
-            if(status == "insert_OK")  //Wenn die Funktion "insertUUID" 'False' zurückgibt, ist kein Error aufgetreten
-                callback("insert_OK");
+            if(status == "insert_OK")
+                callback(status);
             else
             {
                 console.log("Can't insert Value '" + uuid + "' :/ Does the UUID already exist?");

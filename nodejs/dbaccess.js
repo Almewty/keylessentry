@@ -24,7 +24,7 @@ module.exports = {
                 db.run("CREATE TABLE UUID_SECRET (id integer primary key autoincrement, " +
                        "uuid text not null unique, " +
                        "secret text not null)", function(result) {
-                            if(result && result.message.indexOf("SQLITE_ERROR") != -1) { //if error occurs
+                            if(result && result.message.indexOf("SQLITE_ERROR") != -1) { 
                                 callback(result);
                             }
                             else
@@ -44,11 +44,11 @@ module.exports = {
                             + uuid + "', '"                
                             + secret + "')",
                             function(result) {
-                            if(result && result.message.indexOf("SQLITE_CONSTRAINT") != -1) { //if error occurs
-                                    callback(result);           //Error aufgetreten
-                                }
+                            if(result && result.message.indexOf("SQLITE_CONSTRAINT") != -1) {
+                                    callback(result);           //usually Error occurs, when uuid is already in Database
+                            }
                                 else
-                                    callback("insert_OK");      //Kein Error Aufgetreten
+                                    callback("insert_OK");
                             });
                     }
                 });

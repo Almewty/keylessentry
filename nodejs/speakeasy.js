@@ -262,5 +262,3 @@ speakeasy.counter = speakeasy.hotp;
 speakeasy.time = speakeasy.totp;
 
 module.exports = speakeasy;
-
-console.log(speakeasy.totp({key: "hallo123"}))
