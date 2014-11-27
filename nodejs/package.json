@@ -9,6 +9,8 @@
   "license": "MIT",
   "dependencies": {
     "bleno": "0.1.8"
-    , "sqlite3": "~2.2.3"
+    , "sqlite3": "~2.2.3",
+	"ezcrypto": "0.0.3",
+	"thirty-two": "0.0.2"
  }
 }
