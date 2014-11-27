@@ -1,23 +1,50 @@
 /*
 #########################TO-DO#################################
 
--Secret generieren und daraus QR-Code erzeugen
+-OTPAuthenticationCharacteristic nachschauen!
 
 */
 
 /*jshint node:true*/
+
+//Requirements
 var bleno = require('bleno'),
     util = require('util'),
     PrimaryService = bleno.PrimaryService,
     Characteristic = bleno.Characteristic,
     Descriptor = bleno.Descriptor;
 
-var server = require('./db_server');
-var ota = require('./speakeasy');
+var server = require('./db_server');        //Handles Database-connection
+var otp = require('./speakeasy');           //Calculates OTP-Password based on secret
+var qr = require('./QRgenerator');          //Generates QR-Code with App-Link inside
+var moment = require('moment');             //Allows access to time and formats time
+var md5 = require("blueimp-md5").md5;       //Calculates MD5-Hash from text
 
 
-checkSmartphone("debug;2014-11-27 11:22:48");
+//##################################################################################################################
+//Manuelles aufrufen von Funktionen START
 
+//server.initDatabase();                    //reinitialize Database
+
+
+registerSmartphone(function(QRdatapath){
+    if(QRdatapath != "failed")
+        console.log("The QR-Code is stored here: " + QRdatapath);   
+    else
+        console.log("Error!");
+});
+
+checkSmartphone("debug;2014-11-27 11:22:48", function(result){
+    if(result)
+        console.log("YES! Access granted =)");
+});
+
+//##################################################################################################################
+//Manuelles aufrufen von Funktionen END
+
+
+//##################################################################################################################
+//Bleno START
 var uuid = 'E20A39F473F54BC4A12F17D1AD07A961';
 var major = 0x0001;
 var minor = 0x0001;
@@ -84,10 +111,17 @@ OTPAuthenticationCharacteristic.prototype.onWriteRequest = function (data, offse
   
     console.log(data);
     
-    server.checkSmartphone(data,function(uuid,otp){
-            
-        callback(Characteristic.RESULT_SUCCESS, data);          //Rückgabe der Daten an das BLE-Gerät
-  
+        checkSmartphone(data,function(result){
+        if(result)
+        {
+            console.log("Access granted!");
+            callback(Characteristic.RESULT_SUCCESS, "access granted");          //Rückgabe von "access granted ans smartphone
+        }
+        else
+        {
+            console.log("Get out of my way!");
+            callback(Characteristic.RESULT_SUCCESS, "access not granted");      //Rückgabe von "access not granted ans smartphone
+        }
     });
     
 };
@@ -118,8 +152,6 @@ bleno.on('stateChange', function (state) {
     }
 });
 
-
-
 bleno.on('advertisingStart', function (error) {
     console.log('on -> advertisingStart: ' + (error ? 'error ' + error : 'success'));
 
@@ -129,38 +161,78 @@ bleno.on('advertisingStart', function (error) {
         ]);
     }
 });
+//##################################################################################################################
+//Bleno END
 
-function calculateOTA(secret, callback){
-    console.log("database secret: " + secret);
-    console.log("I've calculated some shit " + ota.totp({key: secret}));
-    callback(ota.totp({key: secret}));
+
+
+//##################################################################################################################
+//Keyless-Zeugs START
+function registerSmartphone(callback){
+var dateformat = "YYYY-MM-DD HH:mm:ss";
+
+var datapath = "registerUser";
+var datatyp = "svg";    
+
+var ownidBuffer = new Buffer(md5(md5(moment().format(dateformat))), 'hex');     //md5-hash is hex
+var secretBuffer = new Buffer(md5(moment().format(dateformat)), 'hex');         //md5-hash is hex
+             
+var ownid = ownidBuffer.toString('base64');         //ownid (is base64 encoded so that it won't hit the database)
+var secret = secretBuffer.toString('base64');       //secret (is base64 encoded so that it won't hit the database)
+
+qr.generateQRCode(ownid,
+        "debugdoor",                                            //remoteid
+        secret,
+        datapath,                                               //datapath  e.g. 'registerUser'
+        datatyp,                                                //datatyp e.g. svg (without the . !!!)
+        function(QRdatapath){
+            server.insertUUID(ownid,secret,function(resultcode){
+                if(resultcode == "insert_OK")
+                {
+                    console.log("New Smartphone with uuid '" + ownid + "' registered in Database!");
+                    callback(QRdatapath);
+                }
+                else
+                    callback("failed");
+            });
+        });
 }
 
-function checkSmartphone(receivedString, callback){         //receivedString is in the format:  uuid;ota
- 
-        receivedString = "debug;66666";             
+function calculateOTP(secret, callback){
+    callback(otp.totp({key: secret}));
+}
 
-            var arr = receivedString.split(";");    //Split String into array of uuid and ota
+function checkSmartphone(receivedString, callback){         //receivedString is in the format:  uuid;otp
+
+        receivedString = "NVXYGqWj9SDmm9VBzWaPKw==;66666";             
+
+            var arr = receivedString.split(";");    //Split String into array of uuid and otp
             if(arr.length==2 && typeof(arr[0]) == 'string' && typeof(arr[1]) == 'string')
             {
                 var UUIDreceived = arr[0];  //uuid of asking smartphone
-                var OTAreceived = arr[1];   //calculated ota from smartphone
+                var OTPreceived = arr[1];   //calculated otp from smartphone
                 
                 console.log(UUIDreceived);
-                console.log(OTAreceived);
+                console.log(OTPreceived);
                     
                 server.getSecretFromDB(UUIDreceived,function(secretDB){               //secretDB = Secret from DB
                     if(secretDB)
                     {
-                        calculateOTA(secretDB, function(OTAcalculated){               //OTAcalculated = calculated OTA based on secretDB
-                        //callback(true);
-                        if(OTAcalculated == OTAreceived)
+                        calculateOTP(secretDB, function(OTPcalculated){               //OTPcalculated = calculated OTP based on secretDB
+                        if(OTPcalculated == OTPreceived)
+                        {
                             console.log("Access granted!");
+                            callback(true);
+                        }
                         else
+                        {
                             console.log("Get out of my way!");
+                            callback(false);
+                        }
                         });
                     }
                 });
             }
-        
 }
+//##################################################################################################################
+//Keyless-Zeugs END

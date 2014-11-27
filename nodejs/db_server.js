@@ -26,7 +26,7 @@ module.exports = {
     
     getSecretFromDB: function(uuid, callback){
         dba.getSecret(db, uuid, function(secret){
-            if(secret) //Wenn kein Fehler aufgetreten ist, ist secret!=false
+            if(secret != "getSecret failed") //Wenn kein Fehler aufgetreten ist, ist secret!=false
                 callback(secret);
             else
             {
@@ -37,33 +37,25 @@ module.exports = {
     },
     
     initDatabase: function(){
-    
-    var init = true;        //Flag damit die Datenbank nur einmal initialisiert wird
-                            //wird nur zu debug-zwecken benötigt!
-    if(!init)   //Wenn die Datenbank noch nicht initialisiert ist, initialisieren
-        {
-            dba.initDB(db, function(resultcode){
-                if(resultcode == "init_OK")
-                {
-                    init = true;
-                    console.log("db init: success!");
-                }
-                else
-                    console.log("DB init: an error occurs: " + resultcode);   
-            });
-        }
+        dba.initDB(db, function(resultcode){
+            if(resultcode == "init_OK")
+            {
+                init = true;
+                console.log("db init: success!");
+            }
+            else
+                console.log("DB init: an error occurs: " + resultcode);   
+        });
     },
     
     insertUUID: function(uuid, secret, callback){
-            
-        
         dba.insertUUID(db, uuid, secret, function(status){
-            if(!status)  //Wenn die Funktion "insertUUID" 'False' zurückgibt, ist kein Error aufgetreten
-                callback(true);
+            if(status == "insert_OK")  //Wenn die Funktion "insertUUID" 'False' zurückgibt, ist kein Error aufgetreten
+                callback("insert_OK");
             else
             {
                 console.log("Can't insert Value '" + uuid + "' :/ Does the UUID already exist?");
-                console.log(status);
+                console.log("This Error was thrown by DB: " + status);
                 callback(false);
             }
         });

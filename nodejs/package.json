@@ -8,9 +8,11 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "bleno": "0.1.8"
-    , "sqlite3": "~2.2.3",
+	"bleno": "0.1.8",
+	"sqlite3": "~2.2.3",
 	"ezcrypto": "0.0.3",
-	"thirty-two": "0.0.2"
+	"thirty-two": "0.0.2",
+	"blueimp-md5": "1.1.0",
+	"qr-image": "2.0.0"
  }
 }
