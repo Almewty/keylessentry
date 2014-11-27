@@ -7,6 +7,9 @@ var bleno = require('bleno'),
 
 var server = require('./db_server');
 
+
+checkSmartphone("debug;2014-11-27 11:22:48");
+
 var uuid = 'E20A39F473F54BC4A12F17D1AD07A961';
 var major = 0x0001;
 var minor = 0x0001;
@@ -119,30 +122,34 @@ bleno.on('advertisingStart', function (error) {
     }
 });
 
-/*
-function checkSmartphone(receivedString){
-    
-        receivedString = "debug;2014-11-26 12:40:49";
+function calculateOTA(secret, callback){
+ 
+    console.log("I've calculated some shit");
+    callback("66666");
+}
 
-            var arr = receivedString.split(";");
+function checkSmartphone(receivedString, callback){         //receivedString is in the format:  uuid;ota
+ 
+        receivedString = "debug;66666";             
+
+            var arr = receivedString.split(";");    //Split String into array of uuid and ota
             if(arr.length==2 && typeof(arr[0]) == 'string' && typeof(arr[1]) == 'string')
             {
-                var uuid = arr[0];
-                var ota = arr[1];
-                console.log(uuid);
-                console.log(ota);
+                var UUIDreceived = arr[0];  //uuid of asking smartphone
+                var OTAreceived = arr[1];   //calculated ota from smartphone
+                
+                console.log(UUIDreceived);
+                console.log(OTAreceived);
                     
-                server.getSecretFromDB(uuid,function(DBstoredOTA){
-                    console.log("uuid: " + uuid);
-                    for(element in DBstoredOTA)
-                     {
-                         console.log(element);
-                         callback(uuid,oid);
-                     }
+                server.getSecretFromDB(UUIDreceived,function(secretDB){           //secretDB = Secret from DB
+                    calculateOTA(secretDB, function(OTAcalculated){               //OTAcalculated = calculated OTA based on secretDB
+                        //callback(true);
+                        if(OTAcalculated == OTAreceived)
+                            console.log("Access granted!");
+                        else
+                            console.log("Get out of my way!");
+                    });
                 });
             }
         
-        console.log(uuid);
-        console.log(ota);
 }
-*/
