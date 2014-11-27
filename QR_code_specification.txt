@@ -1,0 +1,8 @@
+http://w-hs.de/keylessentry?name=<name>&ownid=<phoneid>&remoteid=<türid>&secret=<secret>
+
+name=test
+ownid=timestamp at the moment of register (for debugging it's: 'debugphone')
+remoteid=generated id to identify raspberry pi (for debugging it's: 'debugdoor')
+secret=md5-hash of time at the moment of register (for debugging it's: 'debugsecret')
+
+http://w-hs.de/keylessentry?name=test&ownid=8028EFDC4E7E4F1DA3C43AFD7FE76510&remoteid=E20A39F473F54BC4A12F17D1AD07A961&secret=ACACACACACAACCAA
