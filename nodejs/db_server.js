@@ -33,19 +33,34 @@
                 });
         }
         
-        dba.insertUUID(db, "debug",moment(), function(status){
-            if(status)  //Wenn die Funktion "insertUUID" 'True' durch den Callback zurückgibt
-                console.log("insertUUID: success!");
+        var uuid = "debug";
+        dba.insertUUID(db, uuid ,moment(), function(status){
+            if(!status)  //Wenn die Funktion "insertUUID" 'False' zurückgibt, ist kein Error aufgetreten
+                console.log("UUID: '" + uuid + "' successful inserted");
             else
-                console.log("insertUUID: error!");
+            {
+                console.log("Can't insert Value '" + uuid + "' :/ Does the UUID already exist?");
+            }
         });
-     
-        dba.getSecret(db, "debug", function(secret){
-         if(secret) //Wenn kein Fehler aufgetreten ist, ist secret!=false
-         {
-             console.log("result: " + secret);
-         }
+        
+        var uuids = "debug";
+        dba.getSecret(db, uuids, function(secret){
+            if(secret) //Wenn kein Fehler aufgetreten ist, ist secret!=false
+            {
+                console.log("secret for UUID '" + uuid + "' : " + secret);
+            }
+            else
+            {
+                console.log("Whoops! This is an error!\nMaybe the table doesn't exist?");    
+            }
+        }); 
+
+        /*
+        dba.removeUUID(db, uuid, function(status){
+           if(status)
+               console.log("Element: '" + uuid + "' is destroyed");
         });
+*/
     });
 
 
