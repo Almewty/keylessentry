@@ -6,6 +6,7 @@ var bleno = require('bleno'),
     Descriptor = bleno.Descriptor;
 
 var server = require('./db_server');
+var ota = require('./speakeasy');
 
 
 checkSmartphone("debug;2014-11-27 11:22:48");
@@ -124,8 +125,8 @@ bleno.on('advertisingStart', function (error) {
 
 function calculateOTA(secret, callback){
     console.log("database secret: " + secret);
-    console.log("I've calculated some shit");
-    callback("66666");
+    console.log("I've calculated some shit"+ ota.totp({key: secret}));
+    callback(ota.totp({key: secret}));
 }
 
 function checkSmartphone(receivedString, callback){         //receivedString is in the format:  uuid;ota
