@@ -12,26 +12,25 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
-
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.UUID;
 
 import de.w_hs.keylessentry.activities.AboutActivity;
+import de.w_hs.keylessentry.data.DataStorage;
+import de.w_hs.keylessentry.data.Door;
+
+import static de.w_hs.keylessentry.Helper.*;
 
 
 public class MainActivity extends Activity {
     private static final String TAG = ".KeylessEntryApplication";
     private static final int REQUEST_ENABLE_BT = 0;
-    private static final int TRUNCATION_OFFSET = 0;
-    private static final int CODE_DIGITS = 4;
 
     private BluetoothAdapter mBluetoothAdapter;
 
@@ -89,7 +88,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    public void onClickStart(View button){
+    public void onClickStart(View button) {
         toggleButtons();
 
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
@@ -102,35 +101,35 @@ public class MainActivity extends Activity {
         mBluetoothAdapter.startLeScan(mScanCallback);
     }
 
-    public void onClickStop(View button){
+    public void onClickStop(View button) {
         toggleButtons();
 
         mBluetoothAdapter.stopLeScan(mScanCallback);
     }
 
-    private static String generateOTP(byte[] sharedSecret) throws InvalidKeyException {
-        long time = System.currentTimeMillis();
-        time -= (time % (30 * 1000));
-        String result = null;
-        try {
-            result = HOTPAlgorithm.generateOTP(sharedSecret, time, CODE_DIGITS, false, TRUNCATION_OFFSET);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
-
     private BluetoothAdapter.LeScanCallback mScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(final BluetoothDevice bluetoothDevice, int i, byte[] bytes) {
-            //TODO: überprüfen ob es das richtige bluetooth gerät ist.
-            mBluetoothAdapter.stopLeScan(mScanCallback);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    bluetoothDevice.connectGatt(MainActivity.this, true, mGattCallback);
+            UUID uuid = getUUIDFromBLEAdv(bytes);
+            List<Door> doorList = DataStorage.getInstance(getApplicationContext()).getDoors();
+            boolean contains = false;
+            for (Door d : doorList) {
+                if (d.getRemoteIdentifier().equals(uuid)) {
+                    contains = true;
+                    break;
                 }
-            });
+            }
+            if (contains) {
+                mBluetoothAdapter.stopLeScan(mScanCallback);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        bluetoothDevice.connectGatt(MainActivity.this, true, mGattCallback);
+                    }
+                });
+            } else {
+                Log.i(TAG, "wrong beacon");
+            }
         }
     };
 
@@ -147,23 +146,19 @@ public class MainActivity extends Activity {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                BluetoothGattService service = gatt.getService(UUID.fromString("542888d1-6a92-4d9b-9314-69882775001a"));
-                BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("a7a09b5d-8374-445b-89cc-42b73dd164e8"));
+                BluetoothGattService service = gatt.getService(Constants.DOOR_SERVICE);
+                BluetoothGattCharacteristic characteristic = service.getCharacteristic(Constants.DOOR_CHARACTERISTIC);
                 //TODO: one time code senden
-                try {
-                    characteristic.setValue(generateOTP(characteristic.getUuid().toString().getBytes()));
-                    gatt.writeCharacteristic(characteristic);
-                } catch (InvalidKeyException e) {
-                    toggleButtons();
-                    e.printStackTrace();
-                }
+
+                characteristic.setValue(generateOTP(characteristic.getUuid().toString().getBytes()));
+                gatt.writeCharacteristic(characteristic);
             } else {
                 Log.w(TAG, "service error: " + status);
             }
         }
 
         @Override
-    public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             gatt.disconnect();
             gatt.close();
             toggleButtons();

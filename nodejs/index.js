@@ -73,8 +73,8 @@ var startAdvertisingAltBeacon = function (manId, uuid, major, minor, measuredPow
     advertisementData[i++] = 0xFF;
     advertisementData[i++] = manId & 0xFF; // 0x4c; // Apple Company Identifier LE (16 bit)
     advertisementData[i++] = (manId & 0xFF00) >> 8; // 0x00;
-    advertisementData[i++] = 0xBE;
-    advertisementData[i++] = 0xAC;
+    advertisementData[i++] = 0xD0;
+    advertisementData[i++] = 0x02;
     for (var j = 0; j < 16; j++) {
         advertisementData[i++] = uuid[j];
     }

@@ -25,7 +25,24 @@
             android:parentActivityName="de.w_hs.keylessentry.MainActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="w_hs.de.keylessentry.MainActivity" />
+                android:value="de.w_hs.keylessentry.MainActivity" />
+        </activity>
+        <!--android:launchMode="singleTask"-->
+        <activity
+            android:name="de.w_hs.keylessentry.activities.AddDoorActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:label="@string/title_activity_add_door"
+            android:parentActivityName="de.w_hs.keylessentry.MainActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" android:host="w-hs.de"
+                    android:path="/keylessentry" />
+            </intent-filter>
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="de.w_hs.keylessentry.MainActivity" />
         </activity>
     </application>
 
