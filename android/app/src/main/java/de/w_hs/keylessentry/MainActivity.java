@@ -112,19 +112,20 @@ public class MainActivity extends Activity {
         public void onLeScan(final BluetoothDevice bluetoothDevice, int i, byte[] bytes) {
             UUID uuid = getUUIDFromBLEAdv(bytes);
             List<Door> doorList = DataStorage.getInstance(getApplicationContext()).getDoors();
-            boolean contains = false;
+            Door door = null;
             for (Door d : doorList) {
                 if (d.getRemoteIdentifier().equals(uuid)) {
-                    contains = true;
+                    door = d;
                     break;
                 }
             }
-            if (contains) {
+            if (door != null) {
+                final Door resDoor = door;
                 mBluetoothAdapter.stopLeScan(mScanCallback);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        bluetoothDevice.connectGatt(MainActivity.this, true, mGattCallback);
+                        bluetoothDevice.connectGatt(MainActivity.this, true, new InternalGattCallback(resDoor));
                     }
                 });
             } else {
@@ -133,7 +134,13 @@ public class MainActivity extends Activity {
         }
     };
 
-    private BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+    private class InternalGattCallback extends BluetoothGattCallback {
+        private Door door;
+
+        public InternalGattCallback(Door door) {
+            this.door = door;
+        }
+
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
@@ -150,7 +157,7 @@ public class MainActivity extends Activity {
                 BluetoothGattCharacteristic characteristic = service.getCharacteristic(Constants.DOOR_CHARACTERISTIC);
                 //TODO: one time code senden
 
-                characteristic.setValue(generateOTP(characteristic.getUuid().toString().getBytes()));
+                characteristic.setValue(door.getCharacteristicData());
                 gatt.writeCharacteristic(characteristic);
             } else {
                 Log.w(TAG, "service error: " + status);
