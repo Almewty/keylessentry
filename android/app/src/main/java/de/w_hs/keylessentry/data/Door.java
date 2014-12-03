@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -24,15 +25,23 @@ public class Door implements Parcelable {
         this.sharedSecret = sharedSecret;
     }
 
-    public byte[] generateOTPHash() {
+    public byte[] getCharacteristicData() {
+//        ByteBuffer bb = ByteBuffer.wrap(UUIDToBytes(ownIdentifier));
+        ByteBuffer bb = ByteBuffer.allocate(20);
+        bb.put(UUIDToBytes(ownIdentifier));
+        bb.putInt(generateOTPBinary());
+        return bb.array();
+    }
+
+    public int generateOTPBinary() {
         long time = System.currentTimeMillis();
         time -= (time % (30 * 1000));
         try {
-            return HOTPAlgorithm.generateHash(sharedSecret, time);
+            return HOTPAlgorithm.generateHash(sharedSecret, time, -1);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return 0;
     }
 
     public UUID getRemoteIdentifier() {
