@@ -13,6 +13,7 @@
 	"ezcrypto": "0.0.3",
 	"thirty-two": "0.0.2",
 	"blueimp-md5": "1.1.0",
-	"qr-image": "2.0.0"
+	"qr-image": "2.0.0",
+	"pi-gpio": "0.0.6"
  }
 }
