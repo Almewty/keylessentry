@@ -1,7 +1,8 @@
 /*
 #########################TO-DO#################################
 
--OTPAuthenticationCharacteristic nachschauen!
+-OTPAuthenticationCharacteristic nachschauen, unsinnige Werte abfangen!
+-bolzen schließen, nach einem TimeOut von 1 Minute
 
 */
 
@@ -19,6 +20,7 @@ var otp = require('./speakeasy');           //Calculates OTP-Password based on s
 var qr = require('./QRgenerator');          //Generates QR-Code with App-Link inside
 var moment = require('moment');             //Allows access to time and formats time
 var md5 = require("blueimp-md5").md5;       //Calculates MD5-Hash from text
+var gpio = require("pi-gpio");              //Allows access to Raspberry Pi's GPIO-Pins
 
 
 //##################################################################################################################
@@ -221,11 +223,21 @@ function checkSmartphone(receivedString, callback){         //receivedString is 
                         calculateOTP(secretDB, function(OTPcalculated){               //OTPcalculated = calculated OTP based on secretDB
                         if(OTPcalculated == OTPreceived)
                         {
+                            gpio.open(7, "output", function(err){                     //open pin 7 in output mode
+                                gpio.write(7,1,function(){                            //write on pin 7, true (HIGH)
+                                    gpio.close(7);                                    //close pin 7
+                                });
+                            });
                             console.log("Access granted!");
                             callback(true);
                         }
                         else
                         {
+                            gpio.open(7, "output", function(err){                     //open pin 7 in output mode
+                                gpio.write(7,0,function(){                            //write on pin 7, false (LOW)
+                                    gpio.close(7);                                    //close pin 7
+                                });
+                            });
                             console.log("Get out of my way!");
                             callback(false);
                         }
