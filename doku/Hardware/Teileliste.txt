@@ -1,0 +1,11 @@
+Position	Beschreibung			Einzelpreis	Menge	Gesamtpreis
+1		Banana Pi			45,00 €		2	90,00 €
+2		Micro SD Karte			12,00 €		2	24,00 €
+3		Steckernetzteil			9,00 €		2	18,00 €
+4		EDIMAX Wireless USB Adapter	9,00 €		2	18,00 €
+5		Bluetooth 4.0 USB Stick		8,00 €		2	16,00 €
+6		Türfalle			33,00 €		2	66,00 €
+7		Netzteil 5V/12V			21,00€		2	42,00€					
+					
+						Gesamt			251,00 €
+
