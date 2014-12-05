@@ -14,6 +14,7 @@
     "thirty-two": "0.0.2",
     "blueimp-md5": "1.1.0",
     "qr-image": "2.0.0",
-    "pi-gpio": "0.0.6"
+    "pi-gpio": "0.0.6",
+    "moment": "2.8.4"
   }
 }
