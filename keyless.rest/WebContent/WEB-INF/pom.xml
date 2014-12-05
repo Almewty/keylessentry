@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dependency>
+		<groupId>keyless.rest</groupId>
+		<artifactId>jersey-server</artifactId>
+		<version>1.8</version>
+	</dependency>
+ 
+	<dependency>
+		<groupId>keyless.rest</groupId>
+		<artifactId>keyless.rest</artifactId>
+		<version>1.8</version>
+	</dependency>
