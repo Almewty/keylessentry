@@ -69,16 +69,16 @@ public class Helper {
                 .putLong(uuid.getLeastSignificantBits())
                 .array();
     }
-
-
-    public static byte[] generateOTP(byte[] sharedSecret) {
-        long time = System.currentTimeMillis();
-        time -= (time % (30 * 1000));
-        try {
-            return HOTPAlgorithm.generateHash(sharedSecret, time);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+//
+//
+//    public static byte[] generateOTP(byte[] sharedSecret) {
+//        long time = System.currentTimeMillis();
+//        time -= (time % (30 * 1000));
+//        try {
+//            return HOTPAlgorithm.generateHash(sharedSecret, time);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+//    }
 }
