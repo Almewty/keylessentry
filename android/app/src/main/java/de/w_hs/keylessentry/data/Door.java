@@ -26,7 +26,6 @@ public class Door implements Parcelable {
     }
 
     public byte[] getCharacteristicData() {
-//        ByteBuffer bb = ByteBuffer.wrap(UUIDToBytes(ownIdentifier));
         ByteBuffer bb = ByteBuffer.allocate(20);
         bb.put(UUIDToBytes(ownIdentifier));
         bb.putInt(generateOTPBinary());
@@ -35,9 +34,9 @@ public class Door implements Parcelable {
 
     public int generateOTPBinary() {
         long time = System.currentTimeMillis();
-        time -= (time % (30 * 1000));
+        long steps = time / 30000;
         try {
-            return HOTPAlgorithm.generateHash(sharedSecret, time, -1);
+            return HOTPAlgorithm.generateHash(sharedSecret, steps, -1);
         } catch (Exception e) {
             e.printStackTrace();
         }

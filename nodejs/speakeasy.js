@@ -1,3 +1,4 @@
+/*jshint node:true*/
 // # speakeasy
 // ### HMAC One-Time Password module for Node.js, supporting counter-based and time-based moving factors
 // 
@@ -27,7 +28,88 @@ var crypto = require('crypto'),
     ezcrypto = require('ezcrypto').Crypto,
     base32 = require('thirty-two');
 
-var speakeasy = {}
+var speakeasy = {};
+
+// speakeasy.hotp_bin(options)
+//
+// Calculates a subpart for the hotp. Used for our application
+//
+// options.key                  the key
+//        .counter              moving factor
+//        .encoding(='ascii')   key encoding (ascii, hex, or base32)
+//
+speakeasy.hotp_bin = function (options) {
+    // set vars
+    var key = options.key;
+    var counter = options.counter;
+    var encoding = options.encoding || 'ascii';
+
+    // preprocessing: convert to ascii if it's not
+    if (encoding == 'hex') {
+        key = speakeasy.hex_to_ascii(key);
+    } else if (encoding == 'base32') {
+        key = base32.decode(key);
+    }
+
+    // init hmac with the key
+    var hmac = crypto.createHmac('sha1', new Buffer(key));
+
+    // create an octet array from the counter
+    var octet_array = new Array(8);
+
+    var counter_temp = counter;
+
+    for (var i = 0; i < 8; i++) {
+        var i_from_right = 7 - i;
+
+        // mask 255 over number to get last 8
+        octet_array[i_from_right] = counter_temp & 255;
+
+        // shift 8 and get ready to loop over the next batch of 8
+        counter_temp = counter_temp >> 8;
+    }
+
+    // create a buffer from the octet array
+    var counter_buffer = new Buffer(octet_array);
+
+    // update hmac with the counter
+    hmac.update(counter_buffer);
+
+    // get the digest in hex format
+    var digest = hmac.digest('hex');
+
+    // convert the result to an array of bytes
+    var digest_bytes = ezcrypto.util.hexToBytes(digest);
+
+    // compute HOTP
+    // get offset
+    var offset = digest_bytes[19] & 0xf;
+
+    // calculate bin_code (RFC4226 5.4)
+    var bin_code = (digest_bytes[offset] & 0x7f) << 24 | (digest_bytes[offset + 1] & 0xff) << 16 | (digest_bytes[offset + 2] & 0xff) << 8 | (digest_bytes[offset + 3] & 0xff);
+
+    console.log(digest);
+    
+    return bin_code;
+};
+
+// speakeasy.hotp_final(options)
+//
+// Finalize the hotp calculation
+//
+// bin_code                     the binary code from hotp_bin
+//
+speakeasy.hotp_final = function (bin_code, length) {
+
+    bin_code = bin_code.toString();
+
+    // get the chars at position bin_code - length through length chars
+    var sub_start = bin_code.length - length;
+    var code = bin_code.substr(sub_start, length);
+
+    // we now have a code with `length` number of digits, so return it
+    return (code);
+};
 
 // speakeasy.hotp(options)
 //
@@ -38,69 +120,9 @@ var speakeasy = {}
 //        .length(=6)           length of the one-time password (default 6)
 //        .encoding(='ascii')   key encoding (ascii, hex, or base32)
 //
-speakeasy.hotp = function(options) {
-  // set vars
-  var key = options.key;
-  var counter = options.counter;
-  var length = options.length || 6;
-  var encoding = options.encoding || 'ascii';
-
-  // preprocessing: convert to ascii if it's not
-  if (encoding == 'hex') {
-    key = speakeasy.hex_to_ascii(key);
-  } else if (encoding == 'base32') {
-    key = base32.decode(key);
-  }
-
-  // init hmac with the key
-  var hmac = crypto.createHmac('sha1', new Buffer(key));
-  
-  // create an octet array from the counter
-  var octet_array = new Array(8);
-
-  var counter_temp = counter;
-
-  for (var i = 0; i < 8; i++) {
-    var i_from_right = 7 - i;
-
-    // mask 255 over number to get last 8
-    octet_array[i_from_right] = counter_temp & 255;
-
-    // shift 8 and get ready to loop over the next batch of 8
-    counter_temp = counter_temp >> 8;
-  }
-
-  // create a buffer from the octet array
-  var counter_buffer = new Buffer(octet_array);
-
-  // update hmac with the counter
-  hmac.update(counter_buffer);
-
-  // get the digest in hex format
-  var digest = hmac.digest('hex');
-
-  // convert the result to an array of bytes
-  var digest_bytes = ezcrypto.util.hexToBytes(digest);
-
-  // compute HOTP
-  // get offset
-  var offset = digest_bytes[19] & 0xf;
-  
-  // calculate bin_code (RFC4226 5.4)
-  var bin_code = (digest_bytes[offset] & 0x7f)   << 24
-                |(digest_bytes[offset+1] & 0xff) << 16
-                |(digest_bytes[offset+2] & 0xff) << 8
-                |(digest_bytes[offset+3] & 0xff);
-
-  bin_code = bin_code.toString();
-
-  // get the chars at position bin_code - length through length chars
-  var sub_start = bin_code.length - length;
-  var code = bin_code.substr(sub_start, length);
-  
-  // we now have a code with `length` number of digits, so return it
-  return(code);
-}
+speakeasy.hotp = function (options) {
+    return speakeasy.hotp_final(speakeasy.hotp_bin(options), options.length);
+};
 
 // speakeasy.totp(options)
 //
@@ -114,66 +136,71 @@ speakeasy.hotp = function(options) {
 //        .time                 (optional) override the time to calculate with
 //        .initial_time         (optional) override the initial time
 //        
-speakeasy.totp = function(options) {
-  // set vars
-  var key = options.key;
-  var length = options.length || 6;
-  var encoding = options.encoding || 'ascii';
-  var step = options.step || 30;
-  var initial_time = options.initial_time || 0; // unix epoch by default
-  
-  // get current time in seconds since unix epoch
-  var time = parseInt(Date.now()/1000);
-  
-  // are we forcing a specific time?
-  if (options.time) {
-    // override the time
-    time = options.time;
-  }
+speakeasy.totp = function (options) {
+    // set vars
+    var key = options.key;
+    var length = options.length || 6;
+    var encoding = options.encoding || 'ascii';
+    var step = options.step || 30;
+    var initial_time = options.initial_time || 0; // unix epoch by default
 
-  // calculate counter value
-  var counter = Math.floor((time - initial_time)/ step);
-  
-  // pass to hotp
-  var code = this.hotp({key: key, length: length, encoding: encoding, counter: counter});
+    // get current time in seconds since unix epoch
+    var time = parseInt(Date.now() / 1000);
 
-  // return the code
-  return(code);
-}
+    // are we forcing a specific time?
+    if (options.time) {
+        // override the time
+        time = options.time;
+    }
+
+    // calculate counter value
+    var counter = Math.floor((time - initial_time) / step);
+
+    // pass to hotp
+    var code = this.hotp({
+        key: key,
+        length: length,
+        encoding: encoding,
+        counter: counter
+    });
+
+    // return the code
+    return (code);
+};
 
 // speakeasy.hex_to_ascii(key)
 //
 // helper function to convert a hex key to ascii.
 //
-speakeasy.hex_to_ascii = function(str) {
-  // key is a string of hex
-  // convert it to an array of bytes...
-  var bytes = ezcrypto.util.hexToBytes(str);
+speakeasy.hex_to_ascii = function (str) {
+    // key is a string of hex
+    // convert it to an array of bytes...
+    var bytes = ezcrypto.util.hexToBytes(str);
 
-  // bytes is now an array of bytes with character codes
-  // merge this down into a string
-  var ascii_string = new String();
+    // bytes is now an array of bytes with character codes
+    // merge this down into a string
+    var ascii_string = "";
 
-  for (var i = 0; i < bytes.length; i++) {
-    ascii_string += String.fromCharCode(bytes[i]);
-  }
+    for (var i = 0; i < bytes.length; i++) {
+        ascii_string += String.fromCharCode(bytes[i]);
+    }
 
-  return ascii_string;
-}
+    return ascii_string;
+};
 
 // speakeasy.ascii_to_hex(key)
 //
 // helper function to convert an ascii key to hex.
 //
-speakeasy.ascii_to_hex = function(str) {
-  var hex_string = '';
-  
-  for (var i = 0; i < str.length; i++) {
-    hex_string += str.charCodeAt(i).toString(16);
-  }
+speakeasy.ascii_to_hex = function (str) {
+    var hex_string = '';
 
-  return hex_string;
-}
+    for (var i = 0; i < str.length; i++) {
+        hex_string += str.charCodeAt(i).toString(16);
+    }
+
+    return hex_string;
+};
 
 // speakeasy.generate_key(options)
 //
@@ -193,45 +220,45 @@ speakeasy.ascii_to_hex = function(str) {
 //        .name                     (optional) add a name. no spaces.
 //                                  for use with Google Authenticator
 //
-speakeasy.generate_key = function(options) {
-  // options
-  var length = options.length || 32;
-  var name = options.name || "Secret Key";
-  var qr_codes = options.qr_codes || false;
-  var google_auth_qr = options.google_auth_qr || false;
-  var symbols = true;
+speakeasy.generate_key = function (options) {
+    // options
+    var length = options.length || 32;
+    var name = options.name || "Secret Key";
+    var qr_codes = options.qr_codes || false;
+    var google_auth_qr = options.google_auth_qr || false;
+    var symbols = true;
 
-  // turn off symbols only when explicity told to
-  if (options.symbols !== undefined && options.symbols === false) {
-    symbols = false;
-  }
+    // turn off symbols only when explicity told to
+    if (options.symbols !== undefined && options.symbols === false) {
+        symbols = false;
+    }
 
-  // generate an ascii key
-  var key = this.generate_key_ascii(length, symbols);
-  
-  // return a SecretKey with ascii, hex, and base32
-  var SecretKey = {};
-  SecretKey.ascii = key;
-  SecretKey.hex = this.ascii_to_hex(key);
-  SecretKey.base32 = base32.encode(key).replace(/=/g,'');
-  
-  // generate some qr codes if requested
-  if (qr_codes) {
-    SecretKey.qr_code_ascii = 'https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=' + encodeURIComponent(SecretKey.ascii);
-    SecretKey.qr_code_hex = 'https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=' + encodeURIComponent(SecretKey.hex);
-    SecretKey.qr_code_base32 = 'https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=' + encodeURIComponent(SecretKey.base32);
-  }
-  
-  // generate a QR code for use in Google Authenticator if requested
-  // (Google Authenticator has a special style and requires base32)
-  if (google_auth_qr) {
-    // first, make sure that the name doesn't have spaces, since Google Authenticator doesn't like them
-    name = name.replace(/ /g,'');
-    SecretKey.google_auth_qr = 'https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=otpauth://totp/' + encodeURIComponent(name) + '%3Fsecret=' + encodeURIComponent(SecretKey.base32);
-  }
+    // generate an ascii key
+    var key = this.generate_key_ascii(length, symbols);
 
-  return SecretKey;
-}
+    // return a SecretKey with ascii, hex, and base32
+    var SecretKey = {};
+    SecretKey.ascii = key;
+    SecretKey.hex = this.ascii_to_hex(key);
+    SecretKey.base32 = base32.encode(key).replace(/=/g, '');
+
+    // generate some qr codes if requested
+    if (qr_codes) {
+        SecretKey.qr_code_ascii = 'https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=' + encodeURIComponent(SecretKey.ascii);
+        SecretKey.qr_code_hex = 'https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=' + encodeURIComponent(SecretKey.hex);
+        SecretKey.qr_code_base32 = 'https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=' + encodeURIComponent(SecretKey.base32);
+    }
+
+    // generate a QR code for use in Google Authenticator if requested
+    // (Google Authenticator has a special style and requires base32)
+    if (google_auth_qr) {
+        // first, make sure that the name doesn't have spaces, since Google Authenticator doesn't like them
+        name = name.replace(/ /g, '');
+        SecretKey.google_auth_qr = 'https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=otpauth://totp/' + encodeURIComponent(name) + '%3Fsecret=' + encodeURIComponent(SecretKey.base32);
+    }
+
+    return SecretKey;
+};
 
 // speakeasy.generate_key_ascii(length, symbols)
 //
@@ -239,23 +266,23 @@ speakeasy.generate_key = function(options) {
 // Also choose whether you want symbols, default false.
 // speakeasy.generate_key() wraps around this.
 //
-speakeasy.generate_key_ascii = function(length, symbols) {
-  if (!length) length = 32;
+speakeasy.generate_key_ascii = function (length, symbols) {
+    if (!length) length = 32;
 
-  var set = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz';
+    var set = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz';
 
-  if (symbols) {
-    set += '!@#$%^&*()<>?/[]{},.:;';
-  }
-  
-  var key = '';
+    if (symbols) {
+        set += '!@#$%^&*()<>?/[]{},.:;';
+    }
 
-  for(var i=0; i < length; i++) {
-    key += set.charAt(Math.floor(Math.random() * set.length));
-  }
-  
-  return key;
-}
+    var key = '';
+
+    for (var i = 0; i < length; i++) {
+        key += set.charAt(Math.floor(Math.random() * set.length));
+    }
+
+    return key;
+};
 
 // alias, not the TV show
 speakeasy.counter = speakeasy.hotp;

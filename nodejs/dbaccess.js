@@ -78,7 +78,6 @@ module.exports = {
                             db.each("SELECT secret FROM UUID_SECRET where uuid = '" + uuid + "' limit 1", function(err, row) {
                                 if(!err)        //Wenn kein Fehler aufgetreten ist, secret zurückgeben
                                 {
-                                    console.log(row.secret);
                                     callback(row.secret);
                                 }
                                 else

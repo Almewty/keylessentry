@@ -15,12 +15,14 @@ var bleno = require('bleno'),
     Characteristic = bleno.Characteristic,
     Descriptor = bleno.Descriptor;
 
-var server = require('./db_server');        //Handles Database-connection
-var otp = require('./speakeasy');           //Calculates OTP-Password based on secret
-var qr = require('./QRgenerator');          //Generates QR-Code with App-Link inside
-var moment = require('moment');             //Allows access to time and formats time
-var md5 = require("blueimp-md5").md5;       //Calculates MD5-Hash from text
-var gpio = require("pi-gpio");              //Allows access to Raspberry Pi's GPIO-Pins
+var server = require('./db_server'); //Handles Database-connection
+var otp = require('./speakeasy'); //Calculates OTP-Password based on secret
+var qr = require('./QRgenerator'); //Generates QR-Code with App-Link inside
+var moment = require('moment'); //Allows access to time and formats time
+var md5 = require("blueimp-md5").md5; //Calculates MD5-Hash from text
+var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
+var uuid_util = require('node-uuid'); //Allows uuid generation and handling
+var crypto = require('crypto');
 
 
 //##################################################################################################################
@@ -28,19 +30,19 @@ var gpio = require("pi-gpio");              //Allows access to Raspberry Pi's GP
 
 //server.initDatabase();                    //reinitialize Database
 
-
-registerSmartphone(function(QRdatapath){
-    if(QRdatapath != "failed")
-        console.log("The QR-Code is stored here: " + QRdatapath);   
+/*
+registerSmartphone(function (QRdatapath) {
+    if (QRdatapath != "failed")
+        console.log("The QR-Code is stored here: " + QRdatapath);
     else
         console.log("Error!");
 });
 
-checkSmartphone("debug;2014-11-27 11:22:48", function(result){
-    if(result)
+checkSmartphone("debug;2014-11-27 11:22:48", function (result) {
+    if (result)
         console.log("YES! Access granted =)");
 });
-
+*/
 //##################################################################################################################
 //Manuelles aufrufen von Funktionen END
 
@@ -110,22 +112,16 @@ OTPAuthenticationCharacteristic.prototype.onWriteRequest = function (data, offse
         callback(this.RESULT_ATTR_NOT_LONG);
     }
 
-  
-    console.log(data);
-    
-        checkSmartphone(data,function(result){
-        if(result)
-        {
+    checkSmartphone(data, function (result) {
+        if (result) {
             console.log("Access granted!");
-            callback(Characteristic.RESULT_SUCCESS, "access granted");          //Rückgabe von "access granted ans smartphone
-        }
-        else
-        {
+            callback(Characteristic.RESULT_SUCCESS, "access granted"); //Rückgabe von "access granted ans smartphone
+        } else {
             console.log("Get out of my way!");
-            callback(Characteristic.RESULT_SUCCESS, "access not granted");      //Rückgabe von "access not granted ans smartphone
+            callback(Characteristic.RESULT_SUCCESS, "access not granted"); //Rückgabe von "access not granted ans smartphone
         }
     });
-    
+
 };
 
 function OTPService() {
@@ -139,10 +135,10 @@ function OTPService() {
 
 util.inherits(OTPService, PrimaryService);
 
-bleno.updateRssi(function(error, rssi){
-    
+bleno.updateRssi(function (error, rssi) {
+
 });
-    
+
 
 bleno.on('stateChange', function (state) {
     console.log('on -> stateChange: ' + state);
@@ -170,81 +166,86 @@ bleno.on('advertisingStart', function (error) {
 
 //##################################################################################################################
 //Keyless-Zeugs START
-function registerSmartphone(callback){
-var dateformat = "YYYY-MM-DD HH:mm:ss";
+function registerSmartphone(callback) {
+    var dateformat = "YYYY-MM-DD HH:mm:ss";
 
-var datapath = "registerUser";
-var datatyp = "svg";    
+    var datapath = "registerUser";
+    var datatyp = "svg";
 
-var ownidBuffer = new Buffer(md5(md5(moment().format(dateformat))), 'hex');     //md5-hash is hex
-var secretBuffer = new Buffer(md5(moment().format(dateformat)), 'hex');         //md5-hash is hex
-             
-var ownid = ownidBuffer.toString('base64');         //ownid (is base64 encoded so that it won't hit the database)
-var secret = secretBuffer.toString('base64');       //secret (is base64 encoded so that it won't hit the database)
-
-qr.generateQRCode(ownid,
-        "debugdoor",                                            //remoteid
-        secret,
-        datapath,                                               //datapath  e.g. 'registerUser'
-        datatyp,                                                //datatyp e.g. svg (without the . !!!)
-        function(QRdatapath){
-            server.insertUUID(ownid,secret,function(resultcode){
-                if(resultcode == "insert_OK")
-                {
-                    console.log("New Smartphone with uuid '" + ownid + "' registered in Database!");
-                    callback(QRdatapath);
-                }
-                else
-                    callback("failed");
-            });
-        });
-}
-
-function calculateOTP(secret, callback){
-    callback(otp.totp({key: secret}));
-}
-
-function checkSmartphone(receivedString, callback){         //receivedString is in the format:  uuid;otp
-
-        receivedString = "NVXYGqWj9SDmm9VBzWaPKw==;66666";             
-
-            var arr = receivedString.split(";");    //Split String into array of uuid and otp
-            if(arr.length==2 && typeof(arr[0]) == 'string' && typeof(arr[1]) == 'string')
-            {
-                var UUIDreceived = arr[0];  //uuid of asking smartphone
-                var OTPreceived = arr[1];   //calculated otp from smartphone
-                
-                console.log(UUIDreceived);
-                console.log(OTPreceived);
-                    
-                server.getSecretFromDB(UUIDreceived,function(secretDB){               //secretDB = Secret from DB
-                    if(secretDB)
-                    {
-                        calculateOTP(secretDB, function(OTPcalculated){               //OTPcalculated = calculated OTP based on secretDB
-                        if(OTPcalculated == OTPreceived)
-                        {
-                            gpio.open(7, "output", function(err){                     //open pin 7 in output mode
-                                gpio.write(7,1,function(){                            //write on pin 7, true (HIGH)
-                                    gpio.close(7);                                    //close pin 7
-                                });
-                            });
-                            console.log("Access granted!");
-                            callback(true);
-                        }
-                        else
-                        {
-                            gpio.open(7, "output", function(err){                     //open pin 7 in output mode
-                                gpio.write(7,0,function(){                            //write on pin 7, false (LOW)
-                                    gpio.close(7);                                    //close pin 7
-                                });
-                            });
-                            console.log("Get out of my way!");
-                            callback(false);
-                        }
-                        });
-                    }
+    var ownid = uuid_util.parse(uuid_util.v4()).toString('hex'); //ownid 
+    crypto.randomBytes(256, function (ex, secret) {
+        if (ex) {
+            callback("failed");
+            return;
+        }
+        secret = secret.toString('hex');
+        qr.generateQRCode(ownid,
+            uuid, //remoteid
+            secret,
+            datapath, //datapath  e.g. 'registerUser'
+            datatyp, //datatyp e.g. svg (without the . !!!)
+            function (QRdatapath) {
+                server.insertUUID(ownid, secret, function (resultcode) {
+                    if (resultcode == "insert_OK") {
+                        console.log("New Smartphone with uuid '" + ownid + "' registered in Database!");
+                        callback(QRdatapath);
+                    } else
+                        callback("failed");
                 });
-            }
+            });
+    });
 }
+
+function calculateOTPs(secret, callback) {
+    var time = parseInt(Date.now() / 1000);
+
+    // calculate counter value
+    var counter = Math.floor(time / 30);
+
+    callback([otp.hotp_bin({
+            key: secret,
+            counter: counter
+        }),
+           otp.hotp_bin({
+            key: secret,
+            counter: counter - 1
+        }), otp.hotp_bin({
+            key: secret,
+            counter: counter + 1
+        })]);
+}
+
+function checkSmartphone(receivedData, callback) { //receivedData is in the format: uuid(16 bytes) otp(4 bytes)
+    receivedData = new Buffer(receivedData);
+    var UUIDreceived = receivedData.toString('hex', 0, 16).toUpperCase();
+    var OTPreceived = receivedData.readInt32BE(16);
+    
+    console.log(OTPreceived);
+
+    server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret from DB
+        if (secretDB) {
+            calculateOTPs(new Buffer(secretDB, 'hex'), function (OTPcalculated) { //OTPcalculated = calculated OTP based on secretDB
+                console.log(OTPcalculated);
+                if (OTPcalculated.indexOf(OTPreceived) >= 0) {
+                    gpio.open(7, "output", function (err) { //open pin 7 in output mode
+                        gpio.write(7, 1, function () { //write on pin 7, true (HIGH)
+                            gpio.close(7); //close pin 7
+                        });
+                    });
+                    callback(true);
+                } else {
+                    gpio.open(7, "output", function (err) { //open pin 7 in output mode
+                        gpio.write(7, 0, function () { //write on pin 7, false (LOW)
+                            gpio.close(7); //close pin 7
+                        });
+                    });
+                    callback(false);
+                }
+            });
+        } else
+            callback(false);
+    });
+}
+
 //##################################################################################################################
 //Keyless-Zeugs END
