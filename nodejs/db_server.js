@@ -1,14 +1,12 @@
-    /*
-    #############################TO-DO##########################
+/*
+#############################TO-DO##########################
     
-    -Webformular um auf die init-Funktion usw. zuzugreifen
     
-    */
+*/
 
 
     var dba = require('./dbaccess');
-    var moment = require('moment');
-    
+
     //Datenbank-Zeugs
     var sqlite3 = require('sqlite3').verbose();
     var databasepath = "keyless.db";

@@ -3,6 +3,7 @@
 
 -OTPAuthenticationCharacteristic nachschauen, unsinnige Werte abfangen!
 -bolzen schließen, nach einem TimeOut von 1 Minute
+-Webformular um auf die init-Funktion usw. zuzugreifen
 
 */
 
@@ -18,8 +19,6 @@ var bleno = require('bleno'),
 var server = require('./db_server'); //Handles Database-connection
 var otp = require('./speakeasy'); //Calculates OTP-Password based on secret
 var qr = require('./QRgenerator'); //Generates QR-Code with App-Link inside
-var moment = require('moment'); //Allows access to time and formats time
-var md5 = require("blueimp-md5").md5; //Calculates MD5-Hash from text
 var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
 var uuid_util = require('node-uuid'); //Allows uuid generation and handling
 var crypto = require('crypto');
@@ -172,7 +171,7 @@ function registerSmartphone(callback) {
     var datapath = "registerUser";
     var datatyp = "svg";
 
-    var ownid = uuid_util.parse(uuid_util.v4()).toString('hex'); //ownid 
+    var ownid = uuid_util.parse(uuid_util.v4()).toString('hex'); //ownid of smartphone 
     crypto.randomBytes(256, function (ex, secret) {
         if (ex) {
             callback("failed");
@@ -180,7 +179,7 @@ function registerSmartphone(callback) {
         }
         secret = secret.toString('hex');
         qr.generateQRCode(ownid,
-            uuid, //remoteid
+            uuid, //remoteid of door
             secret,
             datapath, //datapath  e.g. 'registerUser'
             datatyp, //datatyp e.g. svg (without the . !!!)
@@ -232,6 +231,13 @@ function checkSmartphone(receivedData, callback) { //receivedData is in the form
                             gpio.close(7); //close pin 7
                         });
                     });
+                    setTimeout(function(){          //After 1 minute (60000 milliseconds) shut the door anyway
+                        gpio.open(7, "output", function (err) { //open pin 7 in output mode
+                            gpio.write(7, 0, function () { //write on pin 7, false (LOW)
+                                gpio.close(7); //close pin 7
+                            });
+                        });
+                    },60000);
                     callback(true);
                 } else {
                     gpio.open(7, "output", function (err) { //open pin 7 in output mode
