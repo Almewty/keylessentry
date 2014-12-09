@@ -19,9 +19,10 @@ var bleno = require('bleno'),
 var server = require('./db_server'); //Handles Database-connection
 var otp = require('./speakeasy'); //Calculates OTP-Password based on secret
 var qr = require('./QRgenerator'); //Generates QR-Code with App-Link inside
-var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
+//var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
 var uuid_util = require('node-uuid'); //Allows uuid generation and handling
 var crypto = require('crypto');
+var base64 = require('base64');//Encodes and decodes to/from base64
 
 
 //##################################################################################################################
@@ -29,7 +30,7 @@ var crypto = require('crypto');
 
 //server.initDatabase();                    //reinitialize Database
 
-/*
+
 registerSmartphone(function (QRdatapath) {
     if (QRdatapath != "failed")
         console.log("The QR-Code is stored here: " + QRdatapath);
@@ -40,7 +41,7 @@ registerSmartphone(function (QRdatapath) {
 checkSmartphone("debug;2014-11-27 11:22:48", function (result) {
     if (result)
         console.log("YES! Access granted =)");
-});
+});/*
 */
 //##################################################################################################################
 //Manuelles aufrufen von Funktionen END
@@ -171,16 +172,20 @@ function registerSmartphone(callback) {
     var datapath = "registerUser";
     var datatyp = "svg";
 
-    var ownid = uuid_util.parse(uuid_util.v4()).toString('hex'); //ownid of smartphone 
+    var ownid = base64.encode(uuid_util.v4());
+    
     crypto.randomBytes(256, function (ex, secret) {
         if (ex) {
             callback("failed");
             return;
         }
-        secret = secret.toString('hex');
-        qr.generateQRCode(ownid,
-            uuid, //remoteid of door
-            secret,
+        
+        secret = base64.encode(secret);
+        
+        qr.generateQRCode(
+            ownid,  //ownid of smartphone
+            base64.encode(uuid), //remoteid of door
+            base64.encode(secret),
             datapath, //datapath  e.g. 'registerUser'
             datatyp, //datatyp e.g. svg (without the . !!!)
             function (QRdatapath) {
@@ -216,11 +221,12 @@ function calculateOTPs(secret, callback) {
 
 function checkSmartphone(receivedData, callback) { //receivedData is in the format: uuid(16 bytes) otp(4 bytes)
     receivedData = new Buffer(receivedData);
-    var UUIDreceived = receivedData.toString('hex', 0, 16).toUpperCase();
+    var UUIDreceived = base64.encode(receivedData.toString('hex', 0, 16));
     var OTPreceived = receivedData.readInt32BE(16);
     
+    console.log(UUIDreceived);
     console.log(OTPreceived);
-
+/*
     server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret from DB
         if (secretDB) {
             calculateOTPs(new Buffer(secretDB, 'hex'), function (OTPcalculated) { //OTPcalculated = calculated OTP based on secretDB
@@ -250,7 +256,7 @@ function checkSmartphone(receivedData, callback) { //receivedData is in the form
             });
         } else
             callback(false);
-    });
+    });*/
 }
 
 //##################################################################################################################
