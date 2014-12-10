@@ -27,7 +27,6 @@ module.exports = {
         qr_svg.pipe(require('fs').createWriteStream(datapath + '.' + datatyp));
 
         var svg_string = qr.imageSync(result, { type: datatyp });
-
         
         callback(datapath + "." + datatyp);
        },

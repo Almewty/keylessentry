@@ -30,7 +30,7 @@ var base64 = require('base64');//Encodes and decodes to/from base64
 
 //server.initDatabase();                    //reinitialize Database
 
-
+/*
 registerSmartphone(function (QRdatapath) {
     if (QRdatapath != "failed")
         console.log("The QR-Code is stored here: " + QRdatapath);
@@ -38,10 +38,10 @@ registerSmartphone(function (QRdatapath) {
         console.log("Error!");
 });
 
-checkSmartphone("debug;2014-11-27 11:22:48", function (result) {
+checkSmartphone("N2YxYzc3NDMtMjliYS00ODkwLWIzNjctZDA1NWJhNjQ2NjIy66667777", function (result) {
     if (result)
         console.log("YES! Access granted =)");
-});/*
+});
 */
 //##################################################################################################################
 //Manuelles aufrufen von Funktionen END
@@ -167,12 +167,10 @@ bleno.on('advertisingStart', function (error) {
 //##################################################################################################################
 //Keyless-Zeugs START
 function registerSmartphone(callback) {
-    var dateformat = "YYYY-MM-DD HH:mm:ss";
-
     var datapath = "registerUser";
     var datatyp = "svg";
 
-    var ownid = base64.encode(uuid_util.v4());
+    var ownid = encodeURIComponent(base64.encode(uuid_util.v4()));
     
     crypto.randomBytes(256, function (ex, secret) {
         if (ex) {
@@ -180,12 +178,12 @@ function registerSmartphone(callback) {
             return;
         }
         
-        secret = base64.encode(secret);
+        secret = encodeURIComponent(base64.encode(secret));
         
         qr.generateQRCode(
-            ownid,  //ownid of smartphone
-            base64.encode(uuid), //remoteid of door
-            base64.encode(secret),
+            ownid,  //ownid of smartphone (base64)
+            encodeURIComponent(base64.encode(uuid)), //remoteid of door (base64)
+            secret, //secret for smartphone (base64)
             datapath, //datapath  e.g. 'registerUser'
             datatyp, //datatyp e.g. svg (without the . !!!)
             function (QRdatapath) {
@@ -221,16 +219,23 @@ function calculateOTPs(secret, callback) {
 
 function checkSmartphone(receivedData, callback) { //receivedData is in the format: uuid(16 bytes) otp(4 bytes)
     receivedData = new Buffer(receivedData);
-    var UUIDreceived = base64.encode(receivedData.toString('hex', 0, 16));
+    var UUIDreceived = base64.encode(receivedData.toString('hex', 0, 16)).toString();
     var OTPreceived = receivedData.readInt32BE(16);
     
-    console.log(UUIDreceived);
-    console.log(OTPreceived);
-/*
     server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret from DB
         if (secretDB) {
-            calculateOTPs(new Buffer(secretDB, 'hex'), function (OTPcalculated) { //OTPcalculated = calculated OTP based on secretDB
-                console.log(OTPcalculated);
+            calculateOTPs(
+                base64.decode(secretDB),     //Convert base64 in Binary, than calculate OTP
+                function (OTPcalculated) { //OTPcalculated = calculated OTP based on secretDB
+                
+                    console.log("received OTP: " + OTPreceived);
+                    if (OTPcalculated.indexOf(OTPreceived) >= 0) {
+                    callback(true);
+                } else {
+                   callback(false);
+                }
+                    
+                /*
                 if (OTPcalculated.indexOf(OTPreceived) >= 0) {
                     gpio.open(7, "output", function (err) { //open pin 7 in output mode
                         gpio.write(7, 1, function () { //write on pin 7, true (HIGH)
@@ -252,11 +257,12 @@ function checkSmartphone(receivedData, callback) { //receivedData is in the form
                         });
                     });
                     callback(false);
-                }
+                    
+                }*/
             });
         } else
             callback(false);
-    });*/
+    });
 }
 
 //##################################################################################################################
