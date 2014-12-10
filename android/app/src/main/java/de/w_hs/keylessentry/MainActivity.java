@@ -155,8 +155,6 @@ public class MainActivity extends Activity {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 BluetoothGattService service = gatt.getService(Constants.DOOR_SERVICE);
                 BluetoothGattCharacteristic characteristic = service.getCharacteristic(Constants.DOOR_CHARACTERISTIC);
-                //TODO: one time code senden
-
                 characteristic.setValue(door.getCharacteristicData());
                 gatt.writeCharacteristic(characteristic);
             } else {
