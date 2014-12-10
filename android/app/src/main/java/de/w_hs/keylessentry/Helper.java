@@ -1,7 +1,10 @@
 package de.w_hs.keylessentry;
 
+import android.util.Base64;
+
 import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -16,7 +19,7 @@ public class Helper {
         byte adLength;
         while ((adLength = bb.get()) > 0) {
             byte adType = bb.get();
-            if (adType != (byte)0xFF) {
+            if (adType != (byte) 0xFF) {
                 bb.position(bb.position() + adLength - 1);
                 continue;
             }
@@ -36,6 +39,7 @@ public class Helper {
 
     // http://stackoverflow.com/questions/9655181/convert-from-byte-array-to-hex-string-in-java
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+
     public static String bytesToHex(byte[] bytes) {
         char[] hexChars = new char[bytes.length * 2];
         for (int j = 0; j < bytes.length; j++) {
@@ -56,6 +60,40 @@ public class Helper {
         }
 
         return data;
+    }
+
+    public static byte[] b64ToBytes(String base64) {
+        return Base64.decode(base64, Base64.DEFAULT);
+    }
+
+    public static String fixUUID(String uuid) {
+        if (uuid.contains("-"))
+            return uuid;
+        StringBuffer sb = new StringBuffer(uuid);
+        sb.insert(8, "-");
+
+        sb = new StringBuffer(sb.toString());
+        sb.insert(13, "-");
+
+        sb = new StringBuffer(sb.toString());
+        sb.insert(18, "-");
+
+        sb = new StringBuffer(sb.toString());
+        sb.insert(23, "-");
+
+        return sb.toString();
+    }
+
+    public static UUID b64ToUUID(String base64) {
+        byte[] bytes = b64ToBytes(base64);
+        try {
+            String uuidString = new String(bytes, "UTF-8");
+            uuidString = fixUUID(uuidString);
+            return UUID.fromString(uuidString);
+        } catch (UnsupportedEncodingException uee) {
+            uee.printStackTrace();
+        }
+        return null;
     }
 
     public static UUID bytesToUUID(byte[] data) {

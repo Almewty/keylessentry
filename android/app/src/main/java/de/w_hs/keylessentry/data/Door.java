@@ -19,6 +19,8 @@ public class Door implements Parcelable {
     private String name;
 
     public Door(String name, UUID remoteIdentifier, UUID ownIdentifier, byte[] sharedSecret) {
+        if (name == null || remoteIdentifier == null || ownIdentifier == null || sharedSecret == null || sharedSecret.length == 0)
+            throw new IllegalArgumentException("No argument may be null and secret must be longer than 0");
         this.name = name;
         this.remoteIdentifier = remoteIdentifier;
         this.ownIdentifier = ownIdentifier;

@@ -11,8 +11,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
+import java.util.UUID;
 
 import de.w_hs.keylessentry.R;
 import de.w_hs.keylessentry.data.DataStorage;
@@ -35,8 +37,11 @@ public class AddDoorActivity extends Activity {
             String ownid = data.getQueryParameter("ownid");
             String remoteid = data.getQueryParameter("remoteid");
             String secret = data.getQueryParameter("secret");
+            UUID remote = b64ToUUID(remoteid);
+            UUID own = b64ToUUID(ownid);
+            byte[] secretDec = b64ToBytes(secret);
             try {
-                Door d = new Door(name, bytesToUUID(hexToBytes(remoteid)), bytesToUUID(hexToBytes(ownid)), hexToBytes(secret));
+                Door d = new Door(name, remote, own, secretDec);
                 DataStorage.getInstance(getApplicationContext()).insertDoor(d);
                 new AlertDialog.Builder(this)
                         .setTitle("Success")
@@ -78,10 +83,10 @@ public class AddDoorActivity extends Activity {
     }
 
     public void onAddClicked(View view) {
-        String name = ((EditText)findViewById(R.id.edit_name)).getText().toString();
-        String ownid = ((EditText)findViewById(R.id.edit_own_id)).getText().toString();
-        String remoteid = ((EditText)findViewById(R.id.edit_remote_id)).getText().toString();
-        String secret = ((EditText)findViewById(R.id.edit_secret)).getText().toString();
+        String name = ((EditText) findViewById(R.id.edit_name)).getText().toString();
+        String ownid = ((EditText) findViewById(R.id.edit_own_id)).getText().toString();
+        String remoteid = ((EditText) findViewById(R.id.edit_remote_id)).getText().toString();
+        String secret = ((EditText) findViewById(R.id.edit_secret)).getText().toString();
 
         // public Door(String name, UUID remoteIdentifier, UUID ownIdentifier, byte[] sharedSecret) {
         try {
