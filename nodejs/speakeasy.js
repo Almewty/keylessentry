@@ -88,7 +88,7 @@ speakeasy.hotp_bin = function (options) {
     // calculate bin_code (RFC4226 5.4)
     var bin_code = (digest_bytes[offset] & 0x7f) << 24 | (digest_bytes[offset + 1] & 0xff) << 16 | (digest_bytes[offset + 2] & 0xff) << 8 | (digest_bytes[offset + 3] & 0xff);
 
-    console.log(digest);
+    //console.log(digest);
     
     return bin_code;
 };

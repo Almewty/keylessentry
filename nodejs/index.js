@@ -19,7 +19,7 @@ var bleno = require('bleno'),
 var server = require('./db_server'); //Handles Database-connection
 var otp = require('./speakeasy'); //Calculates OTP-Password based on secret
 var qr = require('./QRgenerator'); //Generates QR-Code with App-Link inside
-//var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
+var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
 var uuid_util = require('node-uuid'); //Allows uuid generation and handling
 var crypto = require('crypto');
 var base64 = require('base64');//Encodes and decodes to/from base64
@@ -170,24 +170,26 @@ function registerSmartphone(callback) {
     var datapath = "registerUser";
     var datatyp = "svg";
 
-    var ownid = encodeURIComponent(base64.encode(uuid_util.v4()));
-    
+   var ownid = base64.encode(uuid_util.v4().replace(/-/gi,''));        // /-/gi replaces all '-' characters
     crypto.randomBytes(256, function (ex, secret) {
         if (ex) {
             callback("failed");
             return;
         }
         
-        secret = encodeURIComponent(base64.encode(secret));
-        
+        secret = base64.encode(secret);
+
         qr.generateQRCode(
-            ownid,  //ownid of smartphone (base64)
+            encodeURIComponent(ownid),  //ownid of smartphone (base64)
             encodeURIComponent(base64.encode(uuid)), //remoteid of door (base64)
-            secret, //secret for smartphone (base64)
+            encodeURIComponent(secret), //secret for smartphone (base64)
             datapath, //datapath  e.g. 'registerUser'
             datatyp, //datatyp e.g. svg (without the . !!!)
             function (QRdatapath) {
-                server.insertUUID(ownid, secret, function (resultcode) {
+                server.insertUUID(
+                    ownid,
+                    secret, 
+                    function (resultcode) {
                     if (resultcode == "insert_OK") {
                         console.log("New Smartphone with uuid '" + ownid + "' registered in Database!");
                         callback(QRdatapath);
@@ -224,18 +226,16 @@ function checkSmartphone(receivedData, callback) { //receivedData is in the form
     
     server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret from DB
         if (secretDB) {
+
             calculateOTPs(
-                base64.decode(secretDB),     //Convert base64 in Binary, than calculate OTP
+                new Buffer(secretDB,'base64'),     //Convert base64 in Binary, than calculate OTP
                 function (OTPcalculated) { //OTPcalculated = calculated OTP based on secretDB
-                
-                    console.log("received OTP: " + OTPreceived);
-                    if (OTPcalculated.indexOf(OTPreceived) >= 0) {
+                if (OTPcalculated.indexOf(OTPreceived) >= 0) {
                     callback(true);
                 } else {
                    callback(false);
                 }
                     
-                /*
                 if (OTPcalculated.indexOf(OTPreceived) >= 0) {
                     gpio.open(7, "output", function (err) { //open pin 7 in output mode
                         gpio.write(7, 1, function () { //write on pin 7, true (HIGH)
@@ -258,7 +258,7 @@ function checkSmartphone(receivedData, callback) { //receivedData is in the form
                     });
                     callback(false);
                     
-                }*/
+                }
             });
         } else
             callback(false);

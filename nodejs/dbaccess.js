@@ -34,7 +34,6 @@ module.exports = {
        },
 
         insertUUID: function(db, uuid, secret, callback){
-                
             if(typeof(uuid) === 'string' && typeof(secret) === 'string')            //Prüfen, ob der Typ passt
             {    
                 checkTable(db, "UUID_SECRET",function(state){  //Prüfen, ob die Tabelle existiert
