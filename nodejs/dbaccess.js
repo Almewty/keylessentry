@@ -4,15 +4,14 @@
 
 */
 
-
 function checkTable(db, TableName, callback){
     //check if table exists
    db.run("select * from " + TableName, function(result) {
-     if(result && result.message.indexOf("no such table") !=-1)       //check if the error contains 'no such table'
-                callback(false);            //Table doesn't exist
-            else
-                callback(true);             //Table already exists
-        });
+       if(result && result.message.indexOf("no such table") !=-1) //check if the error contains 'no such table'
+           callback(false); //Table doesn't exist
+       else
+           callback(true); //Table already exists
+    });
 }
 
 module.exports = {
@@ -34,11 +33,11 @@ module.exports = {
        },
 
         insertUUID: function(db, uuid, secret, callback){
-            if(typeof(uuid) === 'string' && typeof(secret) === 'string')            //Prüfen, ob der Typ passt
+            if(typeof(uuid) === 'string' && typeof(secret) === 'string') //Check if Type's are string
             {    
-                checkTable(db, "UUID_SECRET",function(state){  //Prüfen, ob die Tabelle existiert
+                checkTable(db, "UUID_SECRET",function(state){  //Check, if Table exists
                     if(state)
-                    {  
+                    {
                         db.run("INSERT INTO UUID_SECRET VALUES (NULL, '"
                             + uuid + "', '"                
                             + secret + "')",
@@ -50,47 +49,73 @@ module.exports = {
                                     callback("insert_OK");
                             });
                     }
+                    else
+                    {
+                        console.log("Error occurs");
+                        callback(false);
+                    }
                 });
+            }
+            else
+            {
+                console.log("Type of uuid or secret isn't string");   
+                callback(false);
             }
         },
     
         removeUUID: function(db, uuid, callback){
-            if(typeof(uuid) === 'string')                      //Prüfen, ob der Typ passt
+            if(typeof(uuid) === 'string')                      //Check if Type is string
             {    
-                checkTable(db, "UUID_SECRET",function(state){  //Prüfen, ob Tabelle existiert
+                checkTable(db, "UUID_SECRET",function(state){  //Check, if Table exists
                     if(state)
                     {
                         db.run("DELETE FROM UUID_SECRET WHERE uuid = '" + uuid + "'", function(result) {
-                            callback(true);                         //result of delete is always 'null'
+                            callback(true); //result of delete is always 'null', so you don't have to check
                         });
                     }
+                    else
+                    {
+                        console.log("Table UUID_SECRET doesn't exist!");
+                        console.log("Please reinitialize Database");
+                        callback(false);
+                    }
                 });
+            }
+            else
+            {
+                console.log("Type of uuid isn't string");
+                callback(false);
             }
         },
 
         getSecret: function(db, uuid, callback){
-            if(typeof(uuid) === 'string')                      //Prüfen, ob der Typ passt
-                {
-                    checkTable(db, "UUID_SECRET",function(state){
-                        if(state)       //Tabelle existiert =)
-                        {    
-                            db.each("SELECT secret FROM UUID_SECRET where uuid = '" + uuid + "' limit 1", function(err, row) {
-                                if(!err)        //Wenn kein Fehler aufgetreten ist, secret zurückgeben
-                                {
-                                    callback(row.secret);
-                                }
-                                else
-                                {               //Falls Fehler aufgetreten ist, diesen ausgeben und "false" zurückgeben
-                                    console.log(err);    
-                                    callback("getSecret failed");
-                                }
-                            });
-                        }
-                        else
-                        {
-                            callback("getSecret failed");
-                        }
-                    });
-                }
+            if(typeof(uuid) === 'string')                      //Check if Type is string
+            {
+                checkTable(db, "UUID_SECRET",function(state){ //Check if Table exists
+                    if(state)
+                    {    
+                        db.each("SELECT secret FROM UUID_SECRET where uuid = '" + uuid + "' limit 1", function(err, row) {
+                            if(!err)
+                            {
+                                callback(row.secret);
+                            }
+                            else
+                            {
+                                console.log(err);    
+                                callback("failed");
+                            }
+                        });
+                    }
+                    else
+                    {
+                        callback("failed");
+                    }
+                });
+            }
+            else
+            {
+                console.log("Type of uuid isn't string");
+                callback("failed");
+            }
         }
 };

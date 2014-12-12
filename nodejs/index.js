@@ -5,6 +5,10 @@
 -bolzen schließen, nach einem TimeOut von 1 Minute
 -Webformular um auf die init-Funktion usw. zuzugreifen
 
+-Fragwürdigen Code entfernen:
+    -bleno.updateRssi
+    -
+
 */
 
 /*jshint node:true*/
@@ -27,6 +31,7 @@ var base64 = require('base64');//Encodes and decodes to/from base64
 
 //##################################################################################################################
 //Manuelles aufrufen von Funktionen START
+//This Section is just for debugging purposes
 
 //server.initDatabase();                    //reinitialize Database
 
@@ -121,7 +126,6 @@ OTPAuthenticationCharacteristic.prototype.onWriteRequest = function (data, offse
             callback(Characteristic.RESULT_SUCCESS, "access not granted"); //Rückgabe von "access not granted ans smartphone
         }
     });
-
 };
 
 function OTPService() {
@@ -147,6 +151,7 @@ bleno.on('stateChange', function (state) {
         startAdvertisingAltBeacon(0xFFFF, uuid, major, minor, measuredPower, 0x00);
     } else {
         bleno.stopAdvertising();
+        console.log("Advertising stopped");
     }
 });
 
@@ -170,33 +175,35 @@ function registerSmartphone(callback) {
     var datapath = "registerUser";
     var datatyp = "svg";
 
-   var ownid = base64.encode(uuid_util.v4().replace(/-/gi,''));        // /-/gi replaces all '-' characters
-    crypto.randomBytes(256, function (ex, secret) {
+   var smartphoneid = base64.encode(uuid_util.v4().replace(/-/gi,'')); //replace all '-' characters, then encode in base64
+    crypto.randomBytes(256, function (ex, secret) { //generates Secret from randomBytes
         if (ex) {
             callback("failed");
             return;
         }
-        
-        secret = base64.encode(secret);
+        else
+        {
+            secret = base64.encode(secret); //encode secret in base64
 
-        qr.generateQRCode(
-            encodeURIComponent(ownid),  //ownid of smartphone (base64)
-            encodeURIComponent(base64.encode(uuid)), //remoteid of door (base64)
-            encodeURIComponent(secret), //secret for smartphone (base64)
-            datapath, //datapath  e.g. 'registerUser'
-            datatyp, //datatyp e.g. svg (without the . !!!)
-            function (QRdatapath) {
-                server.insertUUID(
-                    ownid,
-                    secret, 
-                    function (resultcode) {
-                    if (resultcode == "insert_OK") {
-                        console.log("New Smartphone with uuid '" + ownid + "' registered in Database!");
-                        callback(QRdatapath);
-                    } else
-                        callback("failed");
+            qr.generateQRCode(
+                encodeURIComponent(smartphoneid),  //ID of Smartphone (base64) and URIencoded
+                encodeURIComponent(base64.encode(uuid)), //ID of Door (base64) and URIencoded
+                encodeURIComponent(secret), //secret: base of OTP-generator on Smartphone and Door (base64) and URIencoded
+                datapath, //datapath  e.g. 'registerUser'
+                datatyp, //datatyp e.g. svg (without the . !!!)
+                function (QRdatapath) {
+                    server.insertUUID(
+                        smartphoneid,
+                        secret, 
+                        function (resultcode) {
+                        if (resultcode == "insert_OK") {
+                            console.log("New Smartphone with uuid '" + smartphoneid + "' registered in Database!");
+                            callback(QRdatapath);
+                        } else
+                            callback("failed");
+                    });
                 });
-            });
+        }
     });
 }
 
@@ -206,16 +213,17 @@ function calculateOTPs(secret, callback) {
     // calculate counter value
     var counter = Math.floor(time / 30);
 
+    //calculate 3 OTP's, to be sure that one should met the Smartphone OTP
     callback([otp.hotp_bin({
             key: secret,
-            counter: counter
+            counter: counter        //Actual OTP
         }),
            otp.hotp_bin({
             key: secret,
-            counter: counter - 1
+            counter: counter - 1    //Previous OTP
         }), otp.hotp_bin({
             key: secret,
-            counter: counter + 1
+            counter: counter + 1    //Next OTP
         })]);
 }
 
@@ -224,19 +232,12 @@ function checkSmartphone(receivedData, callback) { //receivedData is in the form
     var UUIDreceived = base64.encode(receivedData.toString('hex', 0, 16)).toString();
     var OTPreceived = receivedData.readInt32BE(16);
     
-    server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret from DB
+    server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret read from DB
         if (secretDB) {
-
             calculateOTPs(
-                new Buffer(secretDB,'base64'),     //Convert base64 in Binary, than calculate OTP
-                function (OTPcalculated) { //OTPcalculated = calculated OTP based on secretDB
-                if (OTPcalculated.indexOf(OTPreceived) >= 0) {
-                    callback(true);
-                } else {
-                   callback(false);
-                }
-                    
-                if (OTPcalculated.indexOf(OTPreceived) >= 0) {
+                new Buffer(secretDB,'base64'),     //Converts base64 in Binary
+                function (OTPcalculated) { //OTPcalculated = calculated OTPs based on secretDB
+                if (OTPcalculated.indexOf(OTPreceived) >= 0) { //check if one of the 3 OTPs equals
                     gpio.open(7, "output", function (err) { //open pin 7 in output mode
                         gpio.write(7, 1, function () { //write on pin 7, true (HIGH)
                             gpio.close(7); //close pin 7
@@ -257,7 +258,6 @@ function checkSmartphone(receivedData, callback) { //receivedData is in the form
                         });
                     });
                     callback(false);
-                    
                 }
             });
         } else
