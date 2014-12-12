@@ -8,4 +8,11 @@ public class Constants {
 
     public static final UUID DOOR_SERVICE = UUID.fromString("542888d1-6a92-4d9b-9314-69882775001a");
     public static final UUID DOOR_CHARACTERISTIC = UUID.fromString("a7a09b5d-8374-445b-89cc-42b73dd164e8");
+
+    public static final String URI_QUERYPARAM_NAME = "name";
+    public static final String URI_QUERYPARAM_PHONEID = "ownid";
+    public static final String URI_QUERYPARAM_DOORID = "remoteid";
+    public static final String URI_QUERYPARAM_SECRET = "secret";
+
+    public static final String INTENT_EXTRA_DOOR = "intentExtraDoor";
 }

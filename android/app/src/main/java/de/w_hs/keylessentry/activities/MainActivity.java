@@ -1,4 +1,4 @@
-package de.w_hs.keylessentry;
+package de.w_hs.keylessentry.activities;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -17,11 +17,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.UUID;
 
-import de.w_hs.keylessentry.activities.AboutActivity;
+import de.w_hs.keylessentry.Constants;
+import de.w_hs.keylessentry.R;
 import de.w_hs.keylessentry.data.DataStorage;
 import de.w_hs.keylessentry.data.Door;
 
@@ -73,6 +73,9 @@ public class MainActivity extends Activity {
 
         if (id == R.id.action_about) {
             startActivity(new Intent(this, AboutActivity.class));
+            return true;
+        } else if (id == R.id.action_show_list) {
+            startActivity(new Intent(this, ListDoorsActivity.class));
             return true;
         }
 
@@ -168,5 +171,7 @@ public class MainActivity extends Activity {
             gatt.close();
             toggleButtons();
         }
-    };
+    }
+
+    ;
 }

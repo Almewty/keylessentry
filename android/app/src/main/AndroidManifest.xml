@@ -11,7 +11,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="de.w_hs.keylessentry.MainActivity"
+            android:name=".activities.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -20,29 +20,50 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="de.w_hs.keylessentry.activities.AboutActivity"
+            android:name=".activities.AboutActivity"
             android:label="@string/title_activity_about"
-            android:parentActivityName="de.w_hs.keylessentry.MainActivity" >
+            android:parentActivityName=".activities.MainActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="de.w_hs.keylessentry.MainActivity" />
+                android:value=".activities.MainActivity" />
         </activity>
-        <!--android:launchMode="singleTask"-->
         <activity
-            android:name="de.w_hs.keylessentry.activities.AddDoorActivity"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:label="@string/title_activity_add_door"
-            android:parentActivityName="de.w_hs.keylessentry.MainActivity" >
+            android:name=".activities.AddDoorActivity"
+            android:excludeFromRecents="true"
+            android:label="@string/app_name"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" android:host="w-hs.de"
-                    android:path="/keylessentry" />
+
+                <data
+                    android:host="w-hs.de"
+                    android:path="/keylessentry"
+                    android:scheme="http" />
             </intent-filter>
+
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="de.w_hs.keylessentry.MainActivity" />
+                android:value=".activities.MainActivity" />
+        </activity>
+        <activity
+            android:name=".activities.ListDoorsActivity"
+            android:label="@string/title_activity_list_doors"
+            android:parentActivityName=".activities.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="de.w_hs.keylessentry.activities.MainActivity" />
+        </activity>
+        <activity
+            android:name=".activities.ShowDoorActivity"
+            android:label="@string/title_activity_show_door"
+            android:parentActivityName=".activities.ListDoorsActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="de.w_hs.keylessentry.activities.ListDoorsActivity" />
         </activity>
     </application>
 

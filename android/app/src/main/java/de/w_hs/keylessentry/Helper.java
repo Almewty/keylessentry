@@ -2,8 +2,6 @@ package de.w_hs.keylessentry;
 
 import android.util.Base64;
 
-import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
-
 import java.io.UnsupportedEncodingException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -107,16 +105,4 @@ public class Helper {
                 .putLong(uuid.getLeastSignificantBits())
                 .array();
     }
-//
-//
-//    public static byte[] generateOTP(byte[] sharedSecret) {
-//        long time = System.currentTimeMillis();
-//        time -= (time % (30 * 1000));
-//        try {
-//            return HOTPAlgorithm.generateHash(sharedSecret, time);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
 }

@@ -6,13 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.EditText;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.util.UUID;
 
@@ -21,85 +15,66 @@ import de.w_hs.keylessentry.data.DataStorage;
 import de.w_hs.keylessentry.data.Door;
 
 import static de.w_hs.keylessentry.Helper.*;
+import static de.w_hs.keylessentry.Constants.*;
 
 public class AddDoorActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_add_door);
 
-        Intent intent = getIntent();
-        // urls are http://w-hs.de/keylessentry?name=<name>&ownid=<ownid>&remoteid=<remoteid>&secret=<secret>
-        if (intent.getAction() != null && intent.getAction().equals(Intent.ACTION_VIEW)) {
-            Uri data = intent.getData();
-            String name = data.getQueryParameter("name");
-            String ownid = data.getQueryParameter("ownid");
-            String remoteid = data.getQueryParameter("remoteid");
-            String secret = data.getQueryParameter("secret");
-            UUID remote = b64ToUUID(remoteid);
-            UUID own = b64ToUUID(ownid);
-            byte[] secretDec = b64ToBytes(secret);
-            try {
-                Door d = new Door(name, remote, own, secretDec);
-                DataStorage.getInstance(getApplicationContext()).insertDoor(d);
-                new AlertDialog.Builder(this)
-                        .setTitle("Success")
-                        .setMessage("Door successfully added")
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                finish();
-                            }
-                        })
-                        .create().show();
-            } catch (BufferUnderflowException | StringIndexOutOfBoundsException e) {
-                e.printStackTrace();
-                new AlertDialog.Builder(this)
-                        .setTitle("Invalid data")
-                        .setMessage("The entered data is invalid")
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                finish();
-                            }
-                        })
-                        .create().show();
-            }
-//            ((EditText)findViewById(R.id.edit_name)).setText(name);
-//            ((EditText)findViewById(R.id.edit_own_id)).setText(ownid);
-//            ((EditText)findViewById(R.id.edit_remote_id)).setText(remoteid);
-//            ((EditText)findViewById(R.id.edit_secret)).setText(secret);
-        }
-    }
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_add_door, menu);
-        return true;
-    }
-
-    public void onAddClicked(View view) {
-        String name = ((EditText) findViewById(R.id.edit_name)).getText().toString();
-        String ownid = ((EditText) findViewById(R.id.edit_own_id)).getText().toString();
-        String remoteid = ((EditText) findViewById(R.id.edit_remote_id)).getText().toString();
-        String secret = ((EditText) findViewById(R.id.edit_secret)).getText().toString();
-
-        // public Door(String name, UUID remoteIdentifier, UUID ownIdentifier, byte[] sharedSecret) {
         try {
-            Door d = new Door(name, bytesToUUID(hexToBytes(remoteid)), bytesToUUID(hexToBytes(ownid)), hexToBytes(secret));
-            DataStorage.getInstance(getApplicationContext()).insertDoor(d);
-        } catch (BufferUnderflowException | StringIndexOutOfBoundsException e) {
-            e.printStackTrace();
-            new AlertDialog.Builder(this)
-                    .setTitle("Invalid data")
-                    .setMessage("The entered data is invalid")
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setPositiveButton("OK", null)
+            final Door d = extractData(getIntent());
+            buildMessage(getString(R.string.new_door), getString(R.string.new_door_info, d.getName()), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    DataStorage.getInstance(getApplicationContext()).insertDoor(d);
+                    showMessage(getString(R.string.success), getString(R.string.new_door_conf), onClickFinisher);
+                }
+            })
+                    .setNegativeButton(getString(android.R.string.cancel), onClickFinisher)
                     .create().show();
+        } catch (BufferUnderflowException | StringIndexOutOfBoundsException e) {
+            showMessage(getString(R.string.invalid_data_title), getString(R.string.invalid_data_message), android.R.drawable.ic_dialog_alert, onClickFinisher);
         }
+    }
+
+    private DialogInterface.OnClickListener onClickFinisher = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            finish();
+        }
+    };
+
+    private void showMessage(String title, String message, DialogInterface.OnClickListener onClickListener) {
+        buildMessage(title, message, onClickListener).create().show();
+    }
+
+    private void showMessage(String title, String message, int icon, DialogInterface.OnClickListener onClickListener) {
+        buildMessage(title, message, onClickListener)
+                .setIcon(icon)
+                .create().show();
+    }
+
+    private AlertDialog.Builder buildMessage(String title, String message, DialogInterface.OnClickListener onClickListener) {
+        return new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_LIGHT)
+                .setTitle(title)
+                .setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton(getString(android.R.string.ok), onClickListener);
+    }
+
+    private Door extractData(Intent intent) {
+        if (intent.getAction() == null || !intent.getAction().equals(Intent.ACTION_VIEW))
+            throw new IllegalArgumentException("Intent empty or not expected");
+        Uri data = intent.getData();
+        String name = data.getQueryParameter(URI_QUERYPARAM_NAME);
+        String ownid = data.getQueryParameter(URI_QUERYPARAM_PHONEID);
+        String remoteid = data.getQueryParameter(URI_QUERYPARAM_DOORID);
+        String secret = data.getQueryParameter(URI_QUERYPARAM_SECRET);
+        UUID remote = b64ToUUID(remoteid);
+        UUID own = b64ToUUID(ownid);
+        byte[] secretDec = b64ToBytes(secret);
+        return new Door(name, remote, own, secretDec);
     }
 }

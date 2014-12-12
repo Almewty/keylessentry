@@ -16,7 +16,7 @@
                 sharedSecret text not null,
                 name text not null)</item>
     </string-array>
-    <string-array name="database_update"></string-array>
+    <string-array name="database_update" />
 
     <string name="title_activity_add_door">AddDoorActivity</string>
     <string name="hello_world">Hello world!</string>
@@ -25,7 +25,19 @@
     <string name="name">Name</string>
     <string name="add">Add</string>
     <string name="secret">Secret</string>
-    <string name="remote_id">Door ID</string>
-    <string name="own_id">Phone ID</string>
+    <string name="invalid_data_title">Invalid data</string>
+    <string name="invalid_data_message">The scanned QR-Code is invalid</string>
+    <string name="new_door">New door</string>
+    <string name="new_door_info">The following door will be added:\n%s</string>
+    <string name="success">Success</string>
+    <string name="new_door_conf">You can now open this door!</string>
+    <string name="title_activity_list_doors">Registered doors</string>
+    <string name="show_doors">Show doors</string>
+    <string name="view">View</string>
+    <string name="delete">Delete</string>
+    <string name="no_doors">No doors registered yet</string>
+    <string name="title_activity_show_door">ShowDoorActivity</string>
+    <string name="phoneid">Phone-UUID</string>
+    <string name="doorid">Door-UUID</string>
 
 </resources>

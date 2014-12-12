@@ -7,11 +7,12 @@ import com.sun.identity.authentication.modules.hotp.HOTPAlgorithm;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.UUID;
 
 import static de.w_hs.keylessentry.Helper.*;
 
-public class Door implements Parcelable {
+public class Door implements Parcelable, Comparable<Door> {
 
     private UUID remoteIdentifier;
     private UUID ownIdentifier;
@@ -68,7 +69,27 @@ public class Door implements Parcelable {
 
     @Override
     public int hashCode() {
-        return (int)remoteIdentifier.getMostSignificantBits();
+        return (int) remoteIdentifier.getMostSignificantBits();
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
+    public UUID getOwnIdentifier() {
+        return ownIdentifier;
+    }
+
+    @Override
+    public int compareTo(Door another) {
+        if (name == null && another.getName() == null)
+            return 0;
+        if (name == null)
+            return 1;
+        if (another.getName() == null)
+            return -1;
+        return name.compareTo(another.getName());
     }
 
     //region Parcel
@@ -76,6 +97,9 @@ public class Door implements Parcelable {
     private Door(Parcel parcel) {
         this.name = parcel.readString();
         this.remoteIdentifier = (UUID) parcel.readSerializable();
+        this.ownIdentifier = (UUID) parcel.readSerializable();
+        int blength = parcel.readInt();
+        this.sharedSecret = new byte[blength];
         parcel.readByteArray(this.sharedSecret);
     }
 
@@ -100,11 +124,9 @@ public class Door implements Parcelable {
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(name);
         parcel.writeSerializable(remoteIdentifier);
+        parcel.writeSerializable(ownIdentifier);
+        parcel.writeInt(sharedSecret.length);
         parcel.writeByteArray(sharedSecret);
-    }
-
-    public UUID getOwnIdentifier() {
-        return ownIdentifier;
     }
     //endregion
 }
