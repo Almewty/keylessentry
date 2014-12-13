@@ -26,8 +26,8 @@ module.exports = {
         });
     },
 
-    insertUUID: function(uuid, secret, callback){
-        dba.insertUUID(db, uuid, secret, function(status){
+    insertUUID: function(uuid, name, secret, callback){
+        dba.insertUUID(db, uuid, name, secret, function(status){
             if(status == "insert_OK")
                 callback(status);
             else
@@ -43,6 +43,18 @@ module.exports = {
         dba.getSecret(db, uuid, function(secret){
             if(secret != "failed") //Wenn kein Fehler aufgetreten ist, ist secret!="failed"
                 callback(secret);
+            else
+            {
+                console.log("Whoops! This is an error!\nMaybe the table doesn't exist?");
+                callback(false);
+            }
+        }); 
+    },
+    
+    getNameFromDB: function(uuid, callback){
+        dba.getName(db, uuid, function(name){
+            if(secret != "failed") //Wenn kein Fehler aufgetreten ist, ist name!=failed
+                callback(name);
             else
             {
                 console.log("Whoops! This is an error!\nMaybe the table doesn't exist?");

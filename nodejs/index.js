@@ -171,42 +171,6 @@ bleno.on('advertisingStart', function (error) {
 
 //##################################################################################################################
 //Keyless-Zeugs START
-function registerSmartphone(callback) {
-    var datapath = "registerUser";
-    var datatyp = "svg";
-
-   var smartphoneid = base64.encode(uuid_util.v4().replace(/-/gi,'')); //replace all '-' characters, then encode in base64
-    crypto.randomBytes(256, function (ex, secret) { //generates Secret from randomBytes
-        if (ex) {
-            callback("failed");
-            return;
-        }
-        else
-        {
-            secret = base64.encode(secret); //encode secret in base64
-
-            qr.generateQRCode(
-                encodeURIComponent(smartphoneid),  //ID of Smartphone (base64) and URIencoded
-                encodeURIComponent(base64.encode(uuid)), //ID of Door (base64) and URIencoded
-                encodeURIComponent(secret), //secret: base of OTP-generator on Smartphone and Door (base64) and URIencoded
-                datapath, //datapath  e.g. 'registerUser'
-                datatyp, //datatyp e.g. svg (without the . !!!)
-                function (QRdatapath) {
-                    server.insertUUID(
-                        smartphoneid,
-                        secret, 
-                        function (resultcode) {
-                        if (resultcode == "insert_OK") {
-                            console.log("New Smartphone with uuid '" + smartphoneid + "' registered in Database!");
-                            callback(QRdatapath);
-                        } else
-                            callback("failed");
-                    });
-                });
-        }
-    });
-}
-
 function calculateOTPs(secret, callback) {
     var time = parseInt(Date.now() / 1000);
 
@@ -225,6 +189,44 @@ function calculateOTPs(secret, callback) {
             key: secret,
             counter: counter + 1    //Next OTP
         })]);
+}
+
+function registerSmartphone(callback) {
+    var datapath = "registerUser";
+    var datatyp = "svg";
+    var smartphonename = "debugName";
+
+   var smartphoneID = base64.encode(uuid_util.v4().replace(/-/gi,'')); //replace all '-' characters, then encode in base64
+    crypto.randomBytes(256, function (ex, secret) { //generates Secret from randomBytes
+        if (ex) {
+            callback("failed");
+            return;
+        }
+        else
+        {
+            secret = base64.encode(secret); //encode secret in base64
+
+            qr.generateQRCode(
+                encodeURIComponent(smartphoneID),  //ID of Smartphone (base64) and URIencoded
+                encodeURIComponent(base64.encode(uuid)), //ID of Door (base64) and URIencoded
+                encodeURIComponent(secret), //secret: base of OTP-generator on Smartphone and Door (base64) and URIencoded
+                datapath, //datapath  e.g. 'registerUser'
+                datatyp, //datatyp e.g. svg (without the . !!!)
+                function (QRdatapath) {
+                    server.insertUUID(
+                        smartphoneID,
+                        smartphonename,
+                        secret, 
+                        function (resultcode) {
+                        if (resultcode == "insert_OK") {
+                            console.log("New Smartphone with uuid '" + smartphoneID + "' and name: '" + name + "' registered in Database!");
+                            callback(QRdatapath);
+                        } else
+                            callback("failed");
+                    });
+                });
+        }
+    });
 }
 
 function checkSmartphone(receivedData, callback) { //receivedData is in the format: uuid(16 bytes) otp(4 bytes)
@@ -262,6 +264,19 @@ function checkSmartphone(receivedData, callback) { //receivedData is in the form
             });
         } else
             callback(false);
+    });
+}
+
+function getUserName(smartphoneID, callback) {
+    server.getNameFromDB(smartphoneID, function (name) {
+        if (name) {
+            console.log("The Name of UUID '" + smartphoneID + "' is: '" + name + "'");
+            callback(name);
+        } 
+        else {
+            console.log("There was no name for UUID '" + smartphoneID + "' =( I'm sorry about that!");
+            callback(name);
+        }
     });
 }
 

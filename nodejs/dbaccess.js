@@ -22,6 +22,7 @@ module.exports = {
 
                 db.run("CREATE TABLE UUID_SECRET (id integer primary key autoincrement, " +
                        "uuid text not null unique, " +
+                       "name text, " + 
                        "secret text not null)", function(result) {
                             if(result && result.message.indexOf("SQLITE_ERROR") != -1) { 
                                 callback(result);
@@ -32,14 +33,15 @@ module.exports = {
             });
        },
 
-        insertUUID: function(db, uuid, secret, callback){
-            if(typeof(uuid) === 'string' && typeof(secret) === 'string') //Check if Type's are string
+        insertUUID: function(db, uuid, name, secret, callback){
+            if(typeof(uuid) === 'string' && typeof(secret) === 'string' && typeof(name) === 'string') //Check if Type's are string
             {    
                 checkTable(db, "UUID_SECRET",function(state){  //Check, if Table exists
                     if(state)
                     {
                         db.run("INSERT INTO UUID_SECRET VALUES (NULL, '"
-                            + uuid + "', '"                
+                            + uuid + "', '"
+                            + name + "', '"
                             + secret + "')",
                             function(result) {
                             if(result && result.message.indexOf("SQLITE_CONSTRAINT") != -1) {
@@ -58,7 +60,7 @@ module.exports = {
             }
             else
             {
-                console.log("Type of uuid or secret isn't string");   
+                console.log("Type of uuid, name or secret isn't string");   
                 callback(false);
             }
         },
@@ -98,6 +100,37 @@ module.exports = {
                             if(!err)
                             {
                                 callback(row.secret);
+                            }
+                            else
+                            {
+                                console.log(err);    
+                                callback("failed");
+                            }
+                        });
+                    }
+                    else
+                    {
+                        callback("failed");
+                    }
+                });
+            }
+            else
+            {
+                console.log("Type of uuid isn't string");
+                callback("failed");
+            }
+        },
+    
+        getName: function(db, uuid, callback){
+            if(typeof(uuid) === 'string')                      //Check if Type is string
+            {
+                checkTable(db, "UUID_SECRET",function(state){ //Check if Table exists
+                    if(state)
+                    {    
+                        db.each("SELECT name FROM UUID_SECRET where uuid = '" + uuid + "' limit 1", function(err, row) {
+                            if(!err)
+                            {
+                                callback(row.name);
                             }
                             else
                             {
