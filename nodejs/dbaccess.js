@@ -1,6 +1,7 @@
 /*
 ####################################TO-DO###################################
-
+-prüfen, ob getUserList wartet mit dem Callback, bis die db.each alles ins Array gepackt hat
+    -passt der Serialize block? Abfragen, ob DB fertig ist
 
 */
 
@@ -149,6 +150,34 @@ module.exports = {
             {
                 console.log("Type of uuid isn't string");
                 callback("failed");
+            }
+        },
+    
+        getNameList: function(db, callback){
+                checkTable(db, "UUID_SECRET",function(state){ //Check if Table exists
+                    if(state)
+                    {    
+                        var nameList = [];
+                        db.serialize{
+                            db.each("SELECT name FROM UUID_SECRET", function(err, row) {
+                                if(!err)
+                                {
+                                    nameList.push(row.name);
+                                }
+                                else
+                                {
+                                    console.log(err);    
+                                    callback("failed");
+                                }
+                            });
+                        callback(nameList);
+                        }
+                    }
+                    else
+                    {
+                        callback("failed");
+                    }
+                });
             }
         }
 };

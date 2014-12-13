@@ -63,6 +63,18 @@ module.exports = {
         }); 
     },
     
+    getNameListFromDB: function(callback){
+        dba.getNameList(db, function(nameList){
+            if(secret != "failed") //Wenn kein Fehler aufgetreten ist, ist nameList!=failed
+                callback(nameList);
+            else
+            {
+                console.log("Whoops! This is an error!\nMaybe the table doesn't exist?");
+                callback(false);
+            }
+        }); 
+    },
+    
     removeUUID: function(uuid, callback){
         dba.removeUUID(db, uuid, function(status){
             if(status)

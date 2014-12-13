@@ -275,9 +275,21 @@ function getUserName(smartphoneID, callback) {
         } 
         else {
             console.log("There was no name for UUID '" + smartphoneID + "' =( I'm sorry about that!");
-            callback(name);
+            callback(name);     //Will return null
         }
     });
+}
+
+function getUserNameList(callback){
+    server.getNameListFromDB(function(nameList) {
+        if(nameList) {
+            callback(nameList);
+        }
+        else {
+            console.log("There was an error :/ I'm sorry about this"); 
+            callback(nameList); //Will return null
+        }
+    }
 }
 
 //##################################################################################################################
