@@ -63,10 +63,10 @@ module.exports = {
         }); 
     },
     
-    getNameListFromDB: function(callback){
-        dba.getNameList(db, function(nameList){
-            if(secret != "failed") //Wenn kein Fehler aufgetreten ist, ist nameList!=failed
-                callback(nameList);
+    getNameMapFromDB: function(callback){
+        dba.getNameMap(db, function(nameMap){
+            if(nameMap != "failed") //Wenn kein Fehler aufgetreten ist, ist nameMap!=failed
+                callback(nameMap);
             else
             {
                 console.log("Whoops! This is an error!\nMaybe the table doesn't exist?");

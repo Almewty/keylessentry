@@ -7,7 +7,8 @@
 
 -Fragwürdigen Code entfernen:
     -bleno.updateRssi
-    -
+
+-if(Buffer.byteLength(receivedData) == 20) testen!
 
 */
 
@@ -23,7 +24,7 @@ var bleno = require('bleno'),
 var server = require('./db_server'); //Handles Database-connection
 var otp = require('./speakeasy'); //Calculates OTP-Password based on secret
 var qr = require('./QRgenerator'); //Generates QR-Code with App-Link inside
-var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
+//var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
 var uuid_util = require('node-uuid'); //Allows uuid generation and handling
 var crypto = require('crypto');
 var base64 = require('base64');//Encodes and decodes to/from base64
@@ -43,11 +44,19 @@ registerSmartphone(function (QRdatapath) {
         console.log("Error!");
 });
 
-checkSmartphone("N2YxYzc3NDMtMjliYS00ODkwLWIzNjctZDA1NWJhNjQ2NjIy66667777", function (result) {
+
+checkSmartphone("4275a637447c409c5544", function (result) {
     if (result)
         console.log("YES! Access granted =)");
 });
 */
+
+getUserNameMap(function(nameMap){
+    for (var i in nameMap) {
+        console.log("uuid: " + i + ", name: " + nameMap[i]);
+    }
+});
+
 //##################################################################################################################
 //Manuelles aufrufen von Funktionen END
 
@@ -219,7 +228,7 @@ function registerSmartphone(callback) {
                         secret, 
                         function (resultcode) {
                         if (resultcode == "insert_OK") {
-                            console.log("New Smartphone with uuid '" + smartphoneID + "' and name: '" + name + "' registered in Database!");
+                            console.log("New Smartphone with uuid '" + smartphoneID + "' and name: '" + smartphonename + "' registered!");
                             callback(QRdatapath);
                         } else
                             callback("failed");
@@ -230,41 +239,51 @@ function registerSmartphone(callback) {
 }
 
 function checkSmartphone(receivedData, callback) { //receivedData is in the format: uuid(16 bytes) otp(4 bytes)
-    receivedData = new Buffer(receivedData);
-    var UUIDreceived = base64.encode(receivedData.toString('hex', 0, 16)).toString();
-    var OTPreceived = receivedData.readInt32BE(16);
     
-    server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret read from DB
-        if (secretDB) {
-            calculateOTPs(
-                new Buffer(secretDB,'base64'),     //Converts base64 in Binary
-                function (OTPcalculated) { //OTPcalculated = calculated OTPs based on secretDB
-                if (OTPcalculated.indexOf(OTPreceived) >= 0) { //check if one of the 3 OTPs equals
-                    gpio.open(7, "output", function (err) { //open pin 7 in output mode
-                        gpio.write(7, 1, function () { //write on pin 7, true (HIGH)
-                            gpio.close(7); //close pin 7
+    if(Buffer.byteLength(receivedData,'binary') == 20)   //Check if received Data is EXACTLY 20 Bytes long
+    {
+        receivedData = new Buffer(receivedData);
+        var UUIDreceived = base64.encode(receivedData.toString('hex', 0, 16)).toString();
+        var OTPreceived = receivedData.readInt32BE(16);
+
+        server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret read from DB
+            if (secretDB) {
+                calculateOTPs(
+                    new Buffer(secretDB,'base64'),     //Converts secretDB from base64 in Binary
+                    function (OTPcalculated) { //OTPcalculated = calculated OTPs based on secretDB
+                    console.log(OTPcalculated);
+                        /*if (OTPcalculated.indexOf(OTPreceived) >= 0) { //check if one of the 3 OTPs equals
+                        gpio.open(7, "output", function (err) { //open pin 7 in output mode
+                            gpio.write(7, 1, function () { //write on pin 7, true (HIGH)
+                                gpio.close(7); //close pin 7
+                            });
                         });
-                    });
-                    setTimeout(function(){          //After 1 minute (60000 milliseconds) shut the door anyway
+                        setTimeout(function(){          //After 1 minute (60000 milliseconds) shut the door anyway
+                            gpio.open(7, "output", function (err) { //open pin 7 in output mode
+                                gpio.write(7, 0, function () { //write on pin 7, false (LOW)
+                                    gpio.close(7); //close pin 7
+                                });
+                            });
+                        },60000);
+                        callback(true);
+                    } else {
                         gpio.open(7, "output", function (err) { //open pin 7 in output mode
                             gpio.write(7, 0, function () { //write on pin 7, false (LOW)
                                 gpio.close(7); //close pin 7
                             });
                         });
-                    },60000);
-                    callback(true);
-                } else {
-                    gpio.open(7, "output", function (err) { //open pin 7 in output mode
-                        gpio.write(7, 0, function () { //write on pin 7, false (LOW)
-                            gpio.close(7); //close pin 7
-                        });
-                    });
-                    callback(false);
-                }
-            });
-        } else
-            callback(false);
-    });
+                        callback(false);
+                    }*/
+                });
+            } else
+                callback(false);
+        });
+    }
+    else
+    {
+        console.log("ReceivedData is not 20bytes long!");
+        callback(false);
+    }
 }
 
 function getUserName(smartphoneID, callback) {
@@ -280,16 +299,16 @@ function getUserName(smartphoneID, callback) {
     });
 }
 
-function getUserNameList(callback){
-    server.getNameListFromDB(function(nameList) {
-        if(nameList) {
-            callback(nameList);
+function getUserNameMap(callback){
+    server.getNameMapFromDB(function(nameMap) {
+        if(nameMap) {
+            callback(nameMap);
         }
         else {
             console.log("There was an error :/ I'm sorry about this"); 
-            callback(nameList); //Will return null
+            callback(nameMap); //Will return null
         }
-    }
+    });
 }
 
 //##################################################################################################################

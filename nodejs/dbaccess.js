@@ -1,6 +1,7 @@
 /*
 ####################################TO-DO###################################
--prüfen, ob getUserList wartet mit dem Callback, bis die db.each alles ins Array gepackt hat
+-getNameMap wartet nicht mit dem Callback, bis die db.each alles ins Array gepackt hat
+    -vielleicht mit db.all
     -passt der Serialize block? Abfragen, ob DB fertig ist
 
 */
@@ -153,16 +154,16 @@ module.exports = {
             }
         },
     
-        getNameList: function(db, callback){
+        getNameMap: function(db, callback){
                 checkTable(db, "UUID_SECRET",function(state){ //Check if Table exists
                     if(state)
                     {    
-                        var nameList = [];
-                        db.serialize{
-                            db.each("SELECT name FROM UUID_SECRET", function(err, row) {
+                        var nameMap = {};   //This is a Map
+                        db.serialize(function() {
+                            db.each("SELECT uuid, name FROM UUID_SECRET", function(err, row) {
                                 if(!err)
                                 {
-                                    nameList.push(row.name);
+                                    nameMap[row.uuid] = row.name;
                                 }
                                 else
                                 {
@@ -170,8 +171,8 @@ module.exports = {
                                     callback("failed");
                                 }
                             });
-                        callback(nameList);
-                        }
+                        callback(nameMap);
+                        });
                     }
                     else
                     {
@@ -179,5 +180,4 @@ module.exports = {
                     }
                 });
             }
-        }
-};
+}
