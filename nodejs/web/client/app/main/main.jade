@@ -6,11 +6,12 @@ div(ng-include='"components/navbar/navbar.html"')
       h1.page-header Phones:
       ul.nav.nav-tabs.nav-stacked.col-md-4.col-lg-4.col-sm-6(ng-repeat='phone in phones')
         li
-          a(href='#')
+          a(href='#', ng-dblclick='phone.edit = true', ng-hide='phone.edit')
             | {{phone.name}}
             button.close(type='button', ng-click='deletePhone(phone)') ×
+          input.form-control(type='text', ng-show='phone.edit', value='{{phone.name}}', placeholder='New name')
 
-  form.thing-form
+  form.phone-form
     p.input-group
       input.form-control(type='text', placeholder='Add a new phone here.', ng-model='phoneName')
       span.input-group-btn
