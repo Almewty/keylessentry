@@ -1,0 +1,20 @@
+{
+  "name": "keylessentry-nodejs",
+  "version": "0.10.8",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bleno": "0.1.8",
+    "ezcrypto": "0.0.3",
+    "node-uuid": "^1.4.2",
+    "pi-gpio": "0.0.6",
+    "qr-image": "2.0.0",
+    "sqlite3": "2.2.7",
+    "thirty-two": "0.0.2",
+    "base64": "2.1.0"
+  }
+}

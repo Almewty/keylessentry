@@ -1,0 +1,24 @@
+div(ng-include='"components/navbar/navbar.html"')
+
+.container
+  .row
+    .col-lg-12
+      h1.page-header Phones:
+      ul.nav.nav-tabs.nav-stacked.col-md-4.col-lg-4.col-sm-6(ng-repeat='phone in phones')
+        li
+          a(href='#')
+            | {{phone.name}}
+            button.close(type='button', ng-click='deletePhone(phone)') ×
+
+  form.thing-form
+    p.input-group
+      input.form-control(type='text', placeholder='Add a new phone here.', ng-model='phoneName')
+      span.input-group-btn
+        button.btn.btn-primary(type='submit', ng-click='addPhone()') Add New
+
+footer.footer
+  .container
+    p
+      | KeylessEntry v0.1
+      = ' | '
+      a(href='https://w-hs.de') Westfälische Hochschule
