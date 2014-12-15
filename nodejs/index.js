@@ -24,7 +24,7 @@ var bleno = require('bleno'),
 var server = require('./db_server'); //Handles Database-connection
 var otp = require('./speakeasy'); //Calculates OTP-Password based on secret
 var qr = require('./QRgenerator'); //Generates QR-Code with App-Link inside
-//var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
+var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
 var uuid_util = require('node-uuid'); //Allows uuid generation and handling
 var crypto = require('crypto');
 var base64 = require('base64');//Encodes and decodes to/from base64
@@ -240,19 +240,20 @@ function registerSmartphone(callback) {
 
 function checkSmartphone(receivedData, callback) { //receivedData is in the format: uuid(16 bytes) otp(4 bytes)
     
-    if(Buffer.byteLength(receivedData,'binary') == 20)   //Check if received Data is EXACTLY 20 Bytes long
+    if(new Buffer(receivedData).length == 20)   //Check if received Data is EXACTLY 20 Bytes long
     {
         receivedData = new Buffer(receivedData);
         var UUIDreceived = base64.encode(receivedData.toString('hex', 0, 16)).toString();
         var OTPreceived = receivedData.readInt32BE(16);
-
+        
         server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret read from DB
             if (secretDB) {
                 calculateOTPs(
                     new Buffer(secretDB,'base64'),     //Converts secretDB from base64 in Binary
                     function (OTPcalculated) { //OTPcalculated = calculated OTPs based on secretDB
                     console.log(OTPcalculated);
-                        /*if (OTPcalculated.indexOf(OTPreceived) >= 0) { //check if one of the 3 OTPs equals
+                        console.log(OTPreceived);
+                        if (OTPcalculated.indexOf(OTPreceived) >= 0) { //check if one of the 3 OTPs equals
                         gpio.open(7, "output", function (err) { //open pin 7 in output mode
                             gpio.write(7, 1, function () { //write on pin 7, true (HIGH)
                                 gpio.close(7); //close pin 7
@@ -273,7 +274,7 @@ function checkSmartphone(receivedData, callback) { //receivedData is in the form
                             });
                         });
                         callback(false);
-                    }*/
+                    }
                 });
             } else
                 callback(false);
