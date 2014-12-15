@@ -160,10 +160,14 @@ module.exports = {
                     {    
                         var nameMap = {};   //This is a Map
                         db.serialize(function() {
-                            db.each("SELECT uuid, name FROM UUID_SECRET", function(err, row) {
+                            db.all("SELECT uuid, name FROM UUID_SECRET", function(err, rows) {
                                 if(!err)
                                 {
-                                    nameMap[row.uuid] = row.name;
+                                    for(var i in rows){     //Copy the Rows in nameMap
+                                        nameMap[rows[i].uuid] = rows[i].name; 
+                                    };
+                                    
+                                    callback(nameMap);
                                 }
                                 else
                                 {
@@ -171,7 +175,6 @@ module.exports = {
                                     callback("failed");
                                 }
                             });
-                        callback(nameMap);
                         });
                     }
                     else
