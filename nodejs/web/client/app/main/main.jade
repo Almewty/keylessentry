@@ -6,20 +6,20 @@ div(ng-include='"components/navbar/navbar.html"')
             h1.page-header Phones:
             ul.nav.nav-tabs.nav-stacked.col-md-4.col-lg-4.col-sm-6(ng-repeat='phone in phones')
                 li
-                    a(href='#', ng-dblclick='phone.edit = true', ng-hide='phone.edit')
+                    a(href='#', ng-dblclick='showEdit(phone)', ng-hide='phone.edit')
                         | {{phone.name}}
                         button.close(type='button', ng-click='deletePhone(phone)') ×
-                    form(ng-show='phone.edit')
+                    form(ng-show='phone.edit', ng-submit='updatePhone(phone)')
                         p.input-group
-                            input.form-control(type='text', value='{{phone.name}}', placeholder='New name', focus-me='phone.edit')
+                            input.form-control(type='text', placeholder='New name', focus-me='phone.edit', ng-model='phone.newName', maxlength='30', ng-minlength='1', ng-maxlength='30', required)
                             span.input-group-btn
-                                button.btn.btn-primary(type='submit', ng-click='updatePhone(phone)') Update
+                                button.btn.btn-primary(type='submit') Update
 
-    form.phone-form
+    form.phone-form(name='newPhoneForm', ng-submit='addPhone()')
         p.input-group
-            input.form-control(type='text', placeholder='Add a new phone here.', ng-model='phoneName')
+            input.form-control(type='text', placeholder='Add a new phone here.', ng-model='phoneName', maxlength='30', ng-minlength='1', ng-maxlength='30', required)
             span.input-group-btn
-                button.btn.btn-primary(type='submit', ng-click='addPhone()') Add New
+                button.btn.btn-primary(type='submit') Add New
 
 footer.footer
     .container

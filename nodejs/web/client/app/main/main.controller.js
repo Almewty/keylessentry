@@ -1,31 +1,42 @@
 'use strict';
 
 angular.module('keylessEntryApp')
-  .controller('MainCtrl', function ($scope, $http, socket) {
-    $scope.phones = [];
+    .controller('MainCtrl', function ($scope, $http, socket) {
+        $scope.phones = [];
 
-    $http.get('/api/phones').success(function(phones) {
-      $scope.phones = phones;
-      socket.syncUpdates('phone', $scope.phones);
+        $http.get('/api/phones').success(function (phones) {
+            $scope.phones = phones;
+            socket.syncUpdates('phone', $scope.phones);
+        });
+
+        $scope.addPhone = function () {
+            if (!$scope.newPhoneForm.$valid) {
+                return;
+            }
+            $http.post('/api/phones', {
+                name: $scope.phoneName
+            });
+            $scope.phoneName = '';
+        };
+
+        $scope.deletePhone = function (phone) {
+            $http.delete('/api/phones/' + phone._id);
+        };
+
+        $scope.updatePhone = function (phone) {
+            if (phone.newName === undefined || phone.newName.length < 1 || phone.newName.length > 30) {
+                return;
+            }
+            phone.name = phone.newName;
+            $http.put('/api/phones/' + phone._id, phone);
+        };
+
+        $scope.showEdit = function (phone) {
+            phone.newName = phone.name;
+            phone.edit = true;
+        };
+
+        $scope.$on('$destroy', function () {
+            socket.unsyncUpdates('phone');
+        });
     });
-
-    $scope.addPhone = function() {
-      if($scope.phoneName === '') {
-        return;
-      }
-      $http.post('/api/phones', { name: $scope.phoneName });
-      $scope.phoneName = '';
-    };
-
-    $scope.deletePhone = function(phone) {
-      $http.delete('/api/phones/' + phone._id);
-    };
-    
-    $scope.showEdit = function (phone) {
-        phone.edit = true;  
-    };
-
-    $scope.$on('$destroy', function () {
-      socket.unsyncUpdates('phone');
-    });
-  });

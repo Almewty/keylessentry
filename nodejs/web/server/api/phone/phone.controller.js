@@ -39,10 +39,11 @@ exports.show = function (req, res) {
 
 // Creates a new thing in the DB.
 exports.create = function (req, res) {
+    var uid = uuid.v1();
     crypto.randomBytes(256, function (ex, bytes) {
         Phone.create({
+            _id: uid,
             name: req.body.name,
-            phoneId: uuid.v4(),
             secret: bytes
         }, function (err, phone) {
             if (err) {
