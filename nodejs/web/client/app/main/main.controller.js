@@ -20,6 +20,10 @@ angular.module('keylessEntryApp')
     $scope.deletePhone = function(phone) {
       $http.delete('/api/phones/' + phone._id);
     };
+    
+    $scope.showEdit = function (phone) {
+        phone.edit = true;  
+    };
 
     $scope.$on('$destroy', function () {
       socket.unsyncUpdates('phone');
