@@ -13,6 +13,7 @@ var _ = require('lodash');
 var Phone = require('./phone.model');
 var crypto = require('crypto');
 var uuid = require('node-uuid');
+var config = require('./../../config/environment');
 
 // Get list of things
 exports.index = function (req, res) {
@@ -93,6 +94,31 @@ exports.destroy = function (req, res) {
             }
             return res.send(204);
         });
+    });
+};
+
+exports.createLink = function (req, res) {
+    Phone.findById(req.params.id, function (err, phone) {
+        if (err) {
+            return handleError(res, err);
+        }
+        if (!phone) {
+            return res.send(404);
+        }
+        res.json(phone.createUrl());
+    });
+};
+
+exports.createQr = function (req, res) {
+    Phone.findById(req.params.id, function (err, phone) {
+        if (err) {
+            return handleError(res, err);
+        }
+        if (!phone) {
+            return res.send(404);
+        }
+        res.type('svg');
+        phone.pipeQr(res);
     });
 };
 
