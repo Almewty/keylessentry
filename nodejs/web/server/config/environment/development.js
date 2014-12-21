@@ -3,10 +3,12 @@
 // Development specific configuration
 // ==================================
 module.exports = {
-  // MongoDB connection options
-  mongo: {
-    uri: 'mongodb://localhost/keylessentry-dev'
-  },
+    nconfPath: './config-dev.json',
+    
+    // MongoDB connection options
+    mongo: {
+        uri: 'mongodb://localhost/keylessentry-dev'
+    },
 
-  seedDB: true
+    seedDB: true
 };

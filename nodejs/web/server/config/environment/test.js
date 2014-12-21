@@ -3,8 +3,10 @@
 // Test specific configuration
 // ===========================
 module.exports = {
-  // MongoDB connection options
-  mongo: {
-    uri: 'mongodb://localhost/keylessentry-test'
-  }
+
+    nconfPath: './config-test.json',
+    // MongoDB connection options
+    mongo: {
+        uri: 'mongodb://localhost/keylessentry-test'
+    }
 };

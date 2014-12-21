@@ -2,49 +2,85 @@
 
 var path = require('path');
 var _ = require('lodash');
+var nconf = require('nconf');
+var uuid = require('node-uuid');
+
+nconf.argv().env();
 
 function requiredProcessEnv(name) {
-  if(!process.env[name]) {
-    throw new Error('You must set the ' + name + ' environment variable');
-  }
-  return process.env[name];
+    if (!process.env[name]) {
+        throw new Error('You must set the ' + name + ' environment variable');
+    }
+    return process.env[name];
 }
 
 // All configurations will extend these options
 // ============================================
 var all = {
-  env: process.env.NODE_ENV,
+    env: process.env.NODE_ENV,
 
-  // Root path of server
-  root: path.normalize(__dirname + '/../../..'),
+    //nconf json file
+    nconfPath: './config.json',
 
-  // Server port
-  port: process.env.PORT || 9000,
+    //nconf dependent variables
+    nconfVars: ['doorId', 'doorName'],
 
-  // Should we populate the DB with sample data?
-  seedDB: false,
+    // Root path of server
+    root: path.normalize(__dirname + '/../../..'),
 
-  // Secret for session, you will want to change this and make it an environment variable
-  secrets: {
-    session: 'keyless-entry-secret'
-  },
+    // Server port
+    port: process.env.PORT || 9000,
 
-  // List of user roles
-  userRoles: ['guest', 'user', 'admin'],
+    // Should we populate the DB with sample data?
+    seedDB: false,
 
-  // MongoDB connection options
-  mongo: {
-    options: {
-      db: {
-        safe: true
-      }
+    // Secret for session, you will want to change this and make it an environment variable
+    secrets: {
+        session: 'keyless-entry-secret'
+    },
+
+    // MongoDB connection options
+    mongo: {
+        options: {
+            db: {
+                safe: true
+            }
+        }
     }
-  },
 
 };
 
-// Export the config object based on the NODE_ENV
+// Create the config object based on the NODE_ENV
 // ==============================================
-module.exports = _.merge(
-  all,
-  require('./' + process.env.NODE_ENV + '.js') || {});
+all = _.merge(
+    all,
+    require('./' + process.env.NODE_ENV + '.js') || {});
+
+// add a save function wrapper for nconf
+all.save = function () {
+    for (var i = 0; i < all.nconfVars.length; i++) {
+        nconf.set(all.nconfVars[i], all[all.nconfVars[i]]);
+    }
+    nconf.save();
+};
+
+nconf.file({
+    file: all.nconfPath
+});
+
+nconf.defaults({
+    doorName: ''
+});
+
+// add the nconfVars to the exported object
+for (var i = 0; i < all.nconfVars.length; i++) {
+    all[all.nconfVars[i]] = nconf.get(all.nconfVars[i]);
+}
+
+// if no doorId is set create one
+if (!all.doorId) {
+    all.doorId = uuid.v1();
+    all.save();
+}
+
+module.exports = all;
