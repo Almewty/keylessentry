@@ -6,9 +6,9 @@ div(ng-include='"components/navbar/navbar.html"')
             h1.page-header Phones:
             ul.nav.nav-tabs.nav-stacked.col-md-4.col-lg-4.col-sm-6(ng-repeat='phone in phones')
                 li
-                    a(href='#', ng-dblclick='showEdit(phone)', ng-hide='phone.edit')
+                    a(href='#', ng-click='showQr(phone)', ng-hide='phone.edit')
                         | {{phone.name}}
-                        button.close(type='button', ng-click='deletePhone(phone)') ×
+                        button.close(type='button', ng-click='deletePhone(phone)', stop-event='click') &times;
                     form(ng-show='phone.edit', ng-submit='updatePhone(phone)')
                         p.input-group
                             input.form-control(type='text', placeholder='New name', focus-me='phone.edit', ng-model='phone.newName', maxlength='30', ng-minlength='1', ng-maxlength='30', required)

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('keylessEntryApp')
-    .controller('MainCtrl', function ($scope, $http, socket) {
+    .controller('MainCtrl', function ($scope, $http, socket, Modal) {
         $scope.phones = [];
 
         $http.get('/api/phones').success(function (phones) {
@@ -15,12 +15,18 @@ angular.module('keylessEntryApp')
             }
             $http.post('/api/phones', {
                 name: $scope.phoneName
+            }).success(function (phone) {
+            $http.get('/api/phones/' + phone._id + '/link').success(function (data) {
+                Modal.show.qr()('/api/phones/' + phone._id + '/qr', data);
+            });
             });
             $scope.phoneName = '';
         };
 
         $scope.deletePhone = function (phone) {
-            $http.delete('/api/phones/' + phone._id);
+            Modal.confirm.delete(function () {
+                $http.delete('/api/phones/' + phone._id);
+            })(phone.name);
         };
 
         $scope.updatePhone = function (phone) {
@@ -34,6 +40,12 @@ angular.module('keylessEntryApp')
         $scope.showEdit = function (phone) {
             phone.newName = phone.name;
             phone.edit = true;
+        };
+
+        $scope.showQr = function (phone) {
+            $http.get('/api/phones/' + phone._id + '/link').success(function (data) {
+                Modal.show.qr()('/api/phones/' + phone._id + '/qr', data);
+            });
         };
 
         $scope.$on('$destroy', function () {
