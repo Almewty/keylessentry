@@ -1,14 +1,8 @@
 /*
 #########################TO-DO#################################
 
--OTPAuthenticationCharacteristic nachschauen, unsinnige Werte abfangen!
--bolzen schließen, nach einem TimeOut von 1 Minute
 -Webformular um auf die init-Funktion usw. zuzugreifen
-
--Fragwürdigen Code entfernen:
-    -bleno.updateRssi
-
--if(Buffer.byteLength(receivedData) == 20) testen!
+-Methode zum Löschen eines Nutzers erstellen
 
 */
 
