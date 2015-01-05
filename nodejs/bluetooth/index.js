@@ -7,8 +7,7 @@
 
 -Fragwürdigen Code entfernen:
     -bleno.updateRssi
-
--if(Buffer.byteLength(receivedData) == 20) testen!
+    -
 
 */
 
@@ -28,6 +27,7 @@ var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
 var uuid_util = require('node-uuid'); //Allows uuid generation and handling
 var crypto = require('crypto');
 var base64 = require('base64');//Encodes and decodes to/from base64
+var config = require('../server/config/environment'); // configurations
 
 
 //##################################################################################################################
@@ -44,26 +44,19 @@ registerSmartphone(function (QRdatapath) {
         console.log("Error!");
 });
 
-
-checkSmartphone("4275a637447c409c5544", function (result) {
+checkSmartphone("N2YxYzc3NDMtMjliYS00ODkwLWIzNjctZDA1NWJhNjQ2NjIy66667777", function (result) {
     if (result)
         console.log("YES! Access granted =)");
 });
 */
-
-getUserNameMap(function(nameMap){
-    for (var i in nameMap) {
-        console.log("uuid: " + i + ", name: " + nameMap[i]);
-    }
-});
-
 //##################################################################################################################
 //Manuelles aufrufen von Funktionen END
 
 
 //##################################################################################################################
 //Bleno START
-var uuid = 'E20A39F473F54BC4A12F17D1AD07A961';
+//var uuid = 'E20A39F473F54BC4A12F17D1AD07A961';
+var uuid = config.doorId.replace(/-/g, ''); // wird generiert wenn nicht vorhanden. sollte einzigarteig sein pro tür
 var major = 0x0001;
 var minor = 0x0001;
 var measuredPower = -59; // -128 - 127
@@ -180,6 +173,7 @@ bleno.on('advertisingStart', function (error) {
 
 //##################################################################################################################
 //Keyless-Zeugs START
+
 function calculateOTPs(secret, callback) {
     var time = parseInt(Date.now() / 1000);
 
@@ -200,116 +194,46 @@ function calculateOTPs(secret, callback) {
         })]);
 }
 
-function registerSmartphone(callback) {
-    var datapath = "registerUser";
-    var datatyp = "svg";
-    var smartphonename = "debugName";
-
-   var smartphoneID = base64.encode(uuid_util.v4().replace(/-/gi,'')); //replace all '-' characters, then encode in base64
-    crypto.randomBytes(256, function (ex, secret) { //generates Secret from randomBytes
-        if (ex) {
-            callback("failed");
-            return;
-        }
-        else
-        {
-            secret = base64.encode(secret); //encode secret in base64
-
-            qr.generateQRCode(
-                encodeURIComponent(smartphoneID),  //ID of Smartphone (base64) and URIencoded
-                encodeURIComponent(base64.encode(uuid)), //ID of Door (base64) and URIencoded
-                encodeURIComponent(secret), //secret: base of OTP-generator on Smartphone and Door (base64) and URIencoded
-                datapath, //datapath  e.g. 'registerUser'
-                datatyp, //datatyp e.g. svg (without the . !!!)
-                function (QRdatapath) {
-                    server.insertUUID(
-                        smartphoneID,
-                        smartphonename,
-                        secret, 
-                        function (resultcode) {
-                        if (resultcode == "insert_OK") {
-                            console.log("New Smartphone with uuid '" + smartphoneID + "' and name: '" + smartphonename + "' registered!");
-                            callback(QRdatapath);
-                        } else
-                            callback("failed");
-                    });
-                });
-        }
-    });
-}
-
 function checkSmartphone(receivedData, callback) { //receivedData is in the format: uuid(16 bytes) otp(4 bytes)
-    
-    if(new Buffer(receivedData).length == 20)   //Check if received Data is EXACTLY 20 Bytes long
-    {
-        receivedData = new Buffer(receivedData);
-        var UUIDreceived = base64.encode(receivedData.toString('hex', 0, 16)).toString();
-        var OTPreceived = receivedData.readInt32BE(16);
-        
-        server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret read from DB
-            if (secretDB) {
-                calculateOTPs(
-                    new Buffer(secretDB,'base64'),     //Converts secretDB from base64 in Binary
-                    function (OTPcalculated) { //OTPcalculated = calculated OTPs based on secretDB
-                    console.log(OTPcalculated);
-                        console.log(OTPreceived);
-                        if (OTPcalculated.indexOf(OTPreceived) >= 0) { //check if one of the 3 OTPs equals
-                        gpio.open(7, "output", function (err) { //open pin 7 in output mode
-                            gpio.write(7, 1, function () { //write on pin 7, true (HIGH)
-                                gpio.close(7); //close pin 7
-                            });
-                        });
-                        setTimeout(function(){          //After 1 minute (60000 milliseconds) shut the door anyway
-                            gpio.open(7, "output", function (err) { //open pin 7 in output mode
-                                gpio.write(7, 0, function () { //write on pin 7, false (LOW)
-                                    gpio.close(7); //close pin 7
-                                });
-                            });
-                        },60000);
-                        callback(true);
-                    } else {
-                        gpio.open(7, "output", function (err) { //open pin 7 in output mode
-                            gpio.write(7, 0, function () { //write on pin 7, false (LOW)
-                                gpio.close(7); //close pin 7
-                            });
-                        });
-                        callback(false);
-                    }
-                });
-            } else
-                callback(false);
-        });
-    }
-    else
-    {
-        console.log("ReceivedData is not 20bytes long!");
-        callback(false);
-    }
-}
-
-function getUserName(smartphoneID, callback) {
-    server.getNameFromDB(smartphoneID, function (name) {
-        if (name) {
-            console.log("The Name of UUID '" + smartphoneID + "' is: '" + name + "'");
-            callback(name);
-        } 
-        else {
-            console.log("There was no name for UUID '" + smartphoneID + "' =( I'm sorry about that!");
-            callback(name);     //Will return null
-        }
-    });
-}
-
-function getUserNameMap(callback){
-    server.getNameMapFromDB(function(nameMap) {
-        if(nameMap) {
-            callback(nameMap);
-        }
-        else {
-            console.log("There was an error :/ I'm sorry about this"); 
-            callback(nameMap); //Will return null
-        }
-    });
+	if (receivedData.length === 20) {
+		receivedData = new Buffer(receivedData);
+		var UUIDreceived = uuid_util.unparse(receivedData);
+		var OTPreceived = receivedData.readInt32BE(16);
+		
+		server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret read from DB
+			if (secretDB) {
+				calculateOTPs(
+					secretDB,     //Converts base64 in Binary
+					function (OTPcalculated) { //OTPcalculated = calculated OTPs based on secretDB
+					if (OTPcalculated.indexOf(OTPreceived) >= 0) { //check if one of the 3 OTPs equals
+						gpio.open(7, "output", function (err) { //open pin 7 in output mode
+							gpio.write(7, 1, function () { //write on pin 7, true (HIGH)
+								gpio.close(7); //close pin 7
+							});
+						});
+						setTimeout(function(){          //After 1 minute (60000 milliseconds) shut the door anyway
+							gpio.open(7, "output", function (err) { //open pin 7 in output mode
+								gpio.write(7, 0, function () { //write on pin 7, false (LOW)
+									gpio.close(7); //close pin 7
+								});
+							});
+						},60000);
+						callback(true);
+					} else {
+						gpio.open(7, "output", function (err) { //open pin 7 in output mode
+							gpio.write(7, 0, function () { //write on pin 7, false (LOW)
+								gpio.close(7); //close pin 7
+							});
+						});
+						callback(false);
+					}
+				});
+			} else
+				callback(false);
+		});
+	} else {
+		callback(false);
+	}
 }
 
 //##################################################################################################################
