@@ -1,13 +1,8 @@
 /*
 #########################TO-DO#################################
 
--OTPAuthenticationCharacteristic nachschauen, unsinnige Werte abfangen!
--bolzen schließen, nach einem TimeOut von 1 Minute
 -Webformular um auf die init-Funktion usw. zuzugreifen
-
--Fragwürdigen Code entfernen:
-    -bleno.updateRssi
-    -
+-Methode zum Löschen eines Nutzers erstellen
 
 */
 
@@ -193,7 +188,43 @@ function calculateOTPs(secret, callback) {
             counter: counter + 1    //Next OTP
         })]);
 }
-
+/*
+function registerSmartphone(callback) {
+	var datapath = "registerUser";
+	var datatyp = "svg";
+	var smartphonename = "debugName";
+	var smartphoneID = base64.encode(uuid_util.v4().replace(/-/gi,'')); //replace all '-' characters, then encode in base64
+	crypto.randomBytes(256, function (ex, secret) { //generates Secret from randomBytes
+		if (ex) {
+			callback("failed");
+			return;
+		}
+		else
+		{
+			secret = base64.encode(secret); //encode secret in base64
+			qr.generateQRCode(
+			encodeURIComponent(smartphoneID), //ID of Smartphone (base64) and URIencoded
+			encodeURIComponent(base64.encode(uuid)), //ID of Door (base64) and URIencoded
+			encodeURIComponent(secret), //secret: base of OTP-generator on Smartphone and Door (base64) and URIencoded
+			datapath, //datapath e.g. 'registerUser'
+			datatyp, //datatyp e.g. svg (without the . !!!)
+			function (QRdatapath) {
+				server.insertUUID(
+				smartphoneID,
+				smartphonename,
+				secret,
+				function (resultcode) {
+					if (resultcode == "insert_OK") {
+						console.log("New Smartphone with uuid '" + smartphoneID + "' and name: '" + smartphonename + "' registered!");
+						callback(QRdatapath);
+					} else
+						callback("failed");
+				});
+			});
+		}
+	});
+}
+*/
 function checkSmartphone(receivedData, callback) { //receivedData is in the format: uuid(16 bytes) otp(4 bytes)
 	if (receivedData.length === 20) {
 		receivedData = new Buffer(receivedData);
