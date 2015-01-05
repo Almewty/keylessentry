@@ -27,6 +27,7 @@ var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
 var uuid_util = require('node-uuid'); //Allows uuid generation and handling
 var crypto = require('crypto');
 var base64 = require('base64');//Encodes and decodes to/from base64
+var config = require('../server/config/environment'); // configurations
 
 
 //##################################################################################################################
@@ -54,7 +55,8 @@ checkSmartphone("N2YxYzc3NDMtMjliYS00ODkwLWIzNjctZDA1NWJhNjQ2NjIy66667777", func
 
 //##################################################################################################################
 //Bleno START
-var uuid = 'E20A39F473F54BC4A12F17D1AD07A961';
+//var uuid = 'E20A39F473F54BC4A12F17D1AD07A961';
+var uuid = config.doorId.replace(/-/g, ''); // wird generiert wenn nicht vorhanden. sollte einzigarteig sein pro tür
 var major = 0x0001;
 var minor = 0x0001;
 var measuredPower = -59; // -128 - 127
@@ -194,13 +196,13 @@ function calculateOTPs(secret, callback) {
 
 function checkSmartphone(receivedData, callback) { //receivedData is in the format: uuid(16 bytes) otp(4 bytes)
     receivedData = new Buffer(receivedData);
-    var UUIDreceived = base64.encode(receivedData.toString('hex', 0, 16)).toString();
+    var UUIDreceived = uuid_util.unparse(receivedData);
     var OTPreceived = receivedData.readInt32BE(16);
     
     server.getSecretFromDB(UUIDreceived, function (secretDB) { //secretDB = Secret read from DB
         if (secretDB) {
             calculateOTPs(
-                new Buffer(secretDB,'base64'),     //Converts base64 in Binary
+                secretDB,     //Converts base64 in Binary
                 function (OTPcalculated) { //OTPcalculated = calculated OTPs based on secretDB
                 if (OTPcalculated.indexOf(OTPreceived) >= 0) { //check if one of the 3 OTPs equals
                     gpio.open(7, "output", function (err) { //open pin 7 in output mode

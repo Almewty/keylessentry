@@ -9,7 +9,7 @@ module.exports = {
     getSecretFromDB: function(uuid, callback){
         Phone.findById(uuid, function (err, phone) {
             if (err || !phone) {
-                callback(false);   
+                return callback(false);   
             }
             callback(phone.secret);
         });
