@@ -16,9 +16,9 @@ angular.module('keylessEntryApp')
             $http.post('/api/phones', {
                 name: $scope.phoneName
             }).success(function (phone) {
-            $http.get('/api/phones/' + phone._id + '/link').success(function (data) {
-                Modal.show.qr()('/api/phones/' + phone._id + '/qr', data);
-            });
+                $http.get('/api/phones/' + phone._id + '/link').success(function (data) {
+                    Modal.show.qr()('/api/phones/' + phone._id + '/qr', data);
+                });
             });
             $scope.phoneName = '';
         };

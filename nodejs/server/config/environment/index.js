@@ -69,7 +69,7 @@ nconf.file({
 });
 
 nconf.defaults({
-    doorName: 'KeylessEntry'
+    doorName: 'Keyless Entry'
 });
 
 // add the nconfVars to the exported object

@@ -18,12 +18,26 @@ angular.module('keylessEntryApp')
             }
         };
     })
+    .directive('focusMeNoBlur', function ($timeout, $parse, $log) {
+        return {
+            link: function (scope, element, attrs) {
+                var model = $parse(attrs.focusMeNoBlur);
+                scope.$watch(model, function (value) {
+                    if (value === true) {
+                        $timeout(function () {
+                            element[0].focus();
+                        });
+                    }
+                });
+            }
+        };
+    })
     .directive('stopEvent', function () {
         return {
             restrict: 'A',
             link: function (scope, element, attr) {
                 element.bind(attr.stopEvent, function (e) {
-                    e.stopPropagation(); 
+                    e.stopPropagation();
                 });
             }
         };

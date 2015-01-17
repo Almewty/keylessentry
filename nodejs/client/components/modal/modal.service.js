@@ -37,9 +37,9 @@ angular.module('keylessEntryApp')
                             modal: {
                                 dismissable: true,
                                 title: 'QR-Code',
-                                html: '<img class="center-block hidden-xs" src="' + qrurl + '" />' +
-                                '<br />' +
-                                '<a class="visible-xs-block visible-sm-block" target="_blank" href="' + url + '">Click here on your android device!</a>'
+                                html: '<img class="center-block hidden-xs" src="' + qrurl + '?' + Date.now() + '" />' +
+                                    '<br />' +
+                                    '<a class="visible-xs-block visible-sm-block" target="_blank" href="' + url + '">Click here on your android device!</a>'
                             }
                         }, 'modal-primary');
                     };
@@ -78,13 +78,13 @@ angular.module('keylessEntryApp')
                                     click: function (e) {
                                         deleteModal.close(e);
                                     }
-                }, {
+                                }, {
                                     classes: 'btn-default',
                                     text: 'Cancel',
                                     click: function (e) {
                                         deleteModal.dismiss(e);
                                     }
-                }]
+                                }]
                             }
                         }, 'modal-danger');
 

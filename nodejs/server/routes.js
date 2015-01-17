@@ -10,6 +10,7 @@ module.exports = function (app) {
 
     // Insert routes below
     app.use('/api/phones', require('./api/phone'));
+    app.use('/api/settings', require('./api/settings'));
 
     // All undefined asset or api routes should return a 404
     app.route('/:url(api|auth|components|app|bower_components|assets)/*')
