@@ -1,0 +1,27 @@
+### BEGIN INIT INFO
+# Provides:             keylessentry
+# Required-Start:		$remote_fs $named $syslog mongodb
+# Required-Stop:		$remote_fs $named $syslog mongodb
+# Default-Start:        2 3 4 5
+# Default-Stop:         0 1 6
+# Short-Description:    Keyless Entry server
+### END INIT INFO
+
+export PATH=$PATH:/usr/local/bin
+export HOME=/root
+export NODE_ENV=production
+
+case "$1" in
+  start)
+    /usr/local/bin/forever start -c /usr/local/bin/node -p /root/.forever -o /root/.forever/logs/keylessentry/output.log -e /root/.forever/logs/keylessentry/error.log --sourceDir=/opt/keylessentry/ server/app.js
+    ;;
+  stop)
+    exec /usr/local/bin/forever stopall
+    ;;
+  *)
+
+  echo "Usage: /etc/init.d/nodeup {start|stop}"
+  exit 1
+  ;;
+esac
+exit 0
