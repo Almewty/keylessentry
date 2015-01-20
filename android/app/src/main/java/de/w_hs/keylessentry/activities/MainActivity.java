@@ -128,7 +128,7 @@ public class MainActivity extends Activity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        bluetoothDevice.connectGatt(MainActivity.this, true, new InternalGattCallback(resDoor));
+                        bluetoothDevice.connectGatt(MainActivity.this, false, new InternalGattCallback(resDoor));
                     }
                 });
             } else {
