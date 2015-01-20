@@ -28,10 +28,11 @@ angular.module('keylessEntryApp')
                 $scope.toggleEdit = false;
             }).error(function () {
                 var l = 20;
-                for (var i = 0; i < 10; i++)
-                    $('#change-name-form').animate( { 'margin-left': "+=" + ( l = -l ) + 'px' }, 50);
-            });
-        }
+                for (var i = 0; i < 10; i++) {
+                    $('#change-name-form').animate( { 'margin-left': '+=' + ( l = -l ) + 'px' }, 50);
+				}
+			});
+        };
     
         $scope.newName = $scope.name;
     });

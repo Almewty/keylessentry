@@ -18,7 +18,7 @@ angular.module('keylessEntryApp')
             }
         };
     })
-    .directive('focusMeNoBlur', function ($timeout, $parse, $log) {
+    .directive('focusMeNoBlur', function ($timeout, $parse) {
         return {
             link: function (scope, element, attrs) {
                 var model = $parse(attrs.focusMeNoBlur);
