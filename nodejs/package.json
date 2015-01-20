@@ -20,7 +20,6 @@
     "bleno": "0.1.8",
     "pi-gpio": "0.0.6",
     "thirty-two": "0.0.2",
-    "base64": "2.1.0",
     "ezcrypto": "0.0.3",
     "node-uuid": "^1.4.2",
     "qr-image": "^3.0.0",

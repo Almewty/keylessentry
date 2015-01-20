@@ -21,7 +21,6 @@ var qr = require('./QRgenerator'); //Generates QR-Code with App-Link inside
 var gpio = require("pi-gpio"); //Allows access to Raspberry Pi's GPIO-Pins
 var uuid_util = require('node-uuid'); //Allows uuid generation and handling
 var crypto = require('crypto');
-var base64 = require('base64');//Encodes and decodes to/from base64
 var config = require('../server/config/environment'); // configurations
 
 
